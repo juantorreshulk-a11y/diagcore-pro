@@ -1,0 +1,17 @@
+{
+  "background_color": "#30308e",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "DiagCore Pro",
+  "orientation": "any",
+  "scope": "/diagcore-pro",
+  "short_name": "DiagCore",
+  "start_url": "/diagcore-pro",
+  "theme_color": "#a1afd9",
+  "id": "DIAGCORE",
+  "description": "DiagCore Pro: plataforma prática, rápida e organizada para diagnósticos, consultas e acompanhamento do seu prjetoo direto pelo celular em tela cheia.",
+  "lang": "pt",
+  "categories": [
+    "cars"
+  ]
+}
