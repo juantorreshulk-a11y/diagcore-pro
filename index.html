@@ -1,0 +1,3018 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>DiagCore Pro — Engenharia & Telemetria</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            oled: '#030407',
+            surface: '#0A0E17',
+            surfaceLight: '#121826',
+            surfaceElevated: '#182032',
+            neonCyan: '#00F0FF',
+            neonAmber: '#FFB800',
+            neonRed: '#FF2E4C',
+            neonGreen: '#00E676',
+            neonPurple: '#B388FF',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+      user-select: none;
+    }
+    input, textarea, select {
+      user-select: text;
+    }
+    body {
+      background-color: #010204;
+      color: #FFFFFF;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body.high-contrast #app-shell {
+      background-color: #000000 !important;
+      border-color: rgba(255, 255, 255, 0.28) !important;
+    }
+    body.compact-ui .compact-pad {
+      padding-top: 0.3rem !important;
+      padding-bottom: 0.3rem !important;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .snap-feed {
+      scroll-snap-type: y mandatory;
+      overflow-y: scroll;
+      height: 100%;
+    }
+    .snap-card {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      min-height: 100%;
+    }
+    .key-btn {
+      transition: transform 0.08s cubic-bezier(0.2, 0, 0, 1), background-color 0.12s;
+    }
+    .key-btn:active {
+      transform: scale(0.92);
+      background-color: rgba(0, 240, 255, 0.22);
+    }
+    @keyframes pulseBeacon {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.25); }
+    }
+    .beacon-dot {
+      animation: pulseBeacon 1.6s infinite ease-in-out;
+    }
+    @keyframes blinkCursor {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    .terminal-cursor {
+      animation: blinkCursor 1s infinite;
+    }
+    @keyframes slideUpSheet {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .bottom-sheet-anim {
+      animation: slideUpSheet 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-pop {
+      animation: fadeInScale 0.22s ease-out;
+    }
+    .carbon-grid {
+      background-image: radial-gradient(rgba(0, 240, 255, 0.07) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+  </style>
+</head>
+<body class="h-[100dvh] w-screen flex items-center justify-center bg-[#010204]">
+
+  <!-- CONTAINER NATIVO MOBILE OLED CARBON -->
+  <div id="app-shell" class="relative w-full h-[100dvh] sm:w-[426px] sm:h-[880px] sm:max-h-[96dvh] bg-oled sm:rounded-[44px] sm:border-[5px] sm:border-[#1B2336] sm:shadow-[0_0_95px_rgba(0,240,255,0.14)] flex flex-col overflow-hidden">
+
+    <!-- ==================== 1. TELA INICIAL SIMPLIFICADA (NOME E IDADE) ==================== -->
+    <div id="onboarding-screen" class="hidden absolute inset-0 z-50 bg-oled carbon-grid flex flex-col justify-between p-6 overflow-y-auto no-scrollbar">
+      <div class="pt-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-neonCyan shadow-[0_0_14px_#00F0FF]"></div>
+          <span class="font-black tracking-wider text-lg text-white">DIAG<span class="text-neonCyan">CORE</span></span>
+          <span class="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded bg-neonCyan/15 text-neonCyan border border-neonCyan/30">PRO</span>
+        </div>
+        <span data-i18n="quickAccessBadge" class="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-surfaceLight border border-white/10 text-neonGreen">
+          ACESSO RÁPIDO
+        </span>
+      </div>
+
+      <div class="flex-1 flex flex-col justify-center space-y-5 modal-pop py-4">
+        <div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neonCyan/10 border border-neonCyan/25 text-neonCyan text-[10px] font-mono font-bold uppercase tracking-wider mb-2">
+            <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+            <span data-i18n="terminalTag">Engenharia & Telemetria</span>
+          </div>
+          <h1 data-i18n="onboardTitle" class="text-2xl font-black text-white leading-tight">Identificação do Operador</h1>
+          <p data-i18n="onboardSubtitle" class="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            Informe apenas seu <strong class="text-white">Nome</strong> e sua <strong class="text-white">Idade</strong> para liberar o Scanner multi-protocolo, Feed de Falhas, Chat IA, Correções e Configurações.
+          </p>
+        </div>
+
+        <div class="space-y-3.5">
+          <div>
+            <label data-i18n="yourNameLabel" class="block text-[11px] font-bold text-slate-300 mb-1.5">Seu Nome</label>
+            <input
+              id="reg-name"
+              type="text"
+              autocomplete="name"
+              placeholder="Ex: Lucas"
+              onkeydown="if(event.key==='Enter') document.getElementById('reg-age').focus()"
+              class="w-full h-12 px-4 rounded-2xl bg-surfaceLight border border-white/10 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-neonCyan transition"
+            />
+          </div>
+
+          <div>
+            <label data-i18n="yourAgeLabel" class="block text-[11px] font-bold text-slate-300 mb-1.5">Sua Idade</label>
+            <input
+              id="reg-age"
+              type="number"
+              inputmode="numeric"
+              min="12"
+              max="110"
+              placeholder="Ex: 27"
+              onkeydown="if(event.key==='Enter') completeQuickAccess()"
+              class="w-full h-12 px-4 rounded-2xl bg-surfaceLight border border-white/10 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-neonCyan transition"
+            />
+          </div>
+
+          <div id="onboard-error" class="hidden text-xs font-semibold text-neonRed bg-neonRed/10 border border-neonRed/40 px-3.5 py-2.5 rounded-2xl flex items-start gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+            <span id="onboard-error-text"></span>
+          </div>
+        </div>
+
+        <div class="space-y-2.5 pt-1">
+          <button onclick="completeQuickAccess()" class="w-full h-12 rounded-2xl bg-gradient-to-r from-neonCyan to-[#00B8D4] text-black font-black text-xs uppercase tracking-wider shadow-[0_0_25px_rgba(0,240,255,0.35)] active:scale-95 transition flex items-center justify-center gap-2">
+            <span data-i18n="enterAppBtn">Entrar no Aplicativo</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+
+          <button id="saved-profile-shortcut" onclick="loadExistingProfile()" class="hidden w-full h-11 rounded-2xl bg-surfaceLight border border-neonGreen/30 text-neonGreen font-bold text-xs active:scale-95 transition flex items-center justify-center gap-2">
+            <i data-lucide="user-check" class="w-4 h-4"></i>
+            <span id="saved-profile-shortcut-label">Continuar perfil salvo</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pb-1 text-center">
+        <span class="text-[10px] font-mono text-slate-500">12V OBD-II • 24V SAE J1939 • CAN BUS • 10 IDIOMAS</span>
+      </div>
+    </div>
+
+    <!-- ==================== 2. CABEÇALHO E HUD DE TELEMETRIA ==================== -->
+    <header class="px-4 pt-3 pb-1.5 bg-oled border-b border-white/[0.07] shrink-0 z-20">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-2.5 h-2.5 rounded-full bg-neonCyan shadow-[0_0_12px_#00F0FF]"></div>
+          <span class="font-black tracking-wider text-sm text-white">DIAG<span class="text-neonCyan">CORE</span></span>
+          <span class="text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-neonCyan/15 text-neonCyan border border-neonCyan/30">PRO</span>
+          <span id="header-lang-pill" class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-surfaceLight text-neonAmber border border-neonAmber/25">PT-BR</span>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button onclick="openSavedDrawer()" class="relative w-8 h-8 rounded-full bg-surfaceLight border border-white/10 flex items-center justify-center text-slate-300 active:scale-95 transition" title="Salvos">
+            <i data-lucide="bookmark" class="w-3.5 h-3.5 text-neonAmber"></i>
+            <span id="saved-count-dot" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-neonAmber text-black font-black text-[9px] flex items-center justify-center">0</span>
+          </button>
+
+          <button onclick="switchAppTab('settings')" class="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-surfaceLight border border-white/10 active:scale-95 transition">
+            <div id="user-avatar-initials" class="w-5 h-5 rounded-full bg-gradient-to-br from-neonCyan to-neonAmber text-black font-black text-[10px] flex items-center justify-center">
+              OP
+            </div>
+            <span id="user-header-badge" class="text-[11px] font-bold text-slate-200 max-w-[115px] truncate">Operador</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-2 px-2.5 py-1 rounded-xl bg-surface border border-white/[0.07] flex items-center justify-between text-[9px] font-mono">
+        <div class="flex items-center gap-1.5 text-neonGreen">
+          <span class="w-1.5 h-1.5 rounded-full bg-neonGreen beacon-dot"></span>
+          <span id="hud-protocol">OBD-II / SAE J1939</span>
+        </div>
+        <div class="text-slate-400">
+          <span data-i18n="busLabel">BARRAMENTO</span>: <span id="hud-voltage" class="text-neonAmber font-bold">12V / 24V</span>
+        </div>
+        <div class="text-neonCyan font-bold">
+          IA: <span class="text-white">ONLINE</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ==================== ABA 1: SCANNER MULTI-PROTOCOLO ==================== -->
+    <section id="view-scanner" class="flex-1 flex flex-col h-full overflow-hidden">
+      <div class="px-4 pt-2 pb-1 shrink-0 compact-pad">
+        <div class="flex items-center justify-between mb-1 px-0.5">
+          <span data-i18n="step1Vehicle" class="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">1. Veículo / Máquina</span>
+          <span id="cat-selected-tag" class="text-[9px] font-mono text-neonCyan font-bold">TODOS OS VEÍCULOS</span>
+        </div>
+        <div id="category-bar" class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
+      </div>
+
+      <div class="px-4 pt-1 pb-1.5 shrink-0 compact-pad">
+        <div class="flex items-center justify-between mb-1 px-0.5">
+          <span data-i18n="step2Brand" class="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">2. Montadora</span>
+          <button onclick="openBrandDrawer()" class="text-[10px] font-bold text-neonCyan flex items-center gap-1 active:scale-95">
+            <span data-i18n="searchBrandBtn">Buscar Marca</span>
+            <i data-lucide="search" class="w-3 h-3"></i>
+          </button>
+        </div>
+        <div id="brand-bar" class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
+      </div>
+
+      <div class="px-4 py-1 flex-1 flex flex-col justify-center min-h-0">
+        <div class="relative w-full bg-surface carbon-grid rounded-3xl border border-neonCyan/25 px-3.5 py-2.5 flex flex-col justify-between shadow-[inset_0_0_25px_rgba(0,240,255,0.05)]">
+          <div class="flex items-center justify-between text-[9px] font-mono">
+            <span id="active-context-badge" class="text-neonAmber font-bold truncate max-w-[245px]">MODO UNIVERSAL • ESCOLHA VEÍCULO E MARCA</span>
+            <span class="text-slate-500">DTC INPUT</span>
+          </div>
+
+          <div class="my-1.5 relative flex items-center justify-center">
+            <input
+              id="code-display-input"
+              type="text"
+              placeholder="DIGITE O CÓDIGO DE FALHA..."
+              autocomplete="off"
+              autocorrect="off"
+              spellcheck="false"
+              class="w-full bg-transparent text-center font-mono font-extrabold text-2xl sm:text-[26px] tracking-wider text-white placeholder:text-slate-600 placeholder:text-xs focus:outline-none uppercase"
+              onkeydown="if(event.key==='Enter') executeDiagnosticSearch()"
+            />
+            <span class="terminal-cursor text-neonCyan font-mono font-black text-xl pointer-events-none select-none">_</span>
+          </div>
+
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5">
+            <span data-i18n="tryLabel" class="text-[9px] font-mono text-slate-500 shrink-0">TESTAR:</span>
+            <div id="quick-samples-bar" class="flex items-center gap-1.5"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-4 pb-[72px] pt-1 shrink-0">
+        <div class="grid grid-cols-8 gap-1 mb-1">
+          <button onclick="appendKey('P')" class="key-btn h-8 rounded-xl bg-surfaceLight border border-white/10 font-mono font-extrabold text-xs text-neonCyan">P</button>
+          <button onclick="appendKey('U')" class="key-btn h-8 rounded-xl bg-surfaceLight border border-white/10 font-mono font-extrabold text-xs text-neonCyan">U</button>
+          <button onclick="appendKey('B')" class="key-btn h-8 rounded-xl bg-surfaceLight border border-white/10 font-mono font-extrabold text-xs text-neonCyan">B</button>
+          <button onclick="appendKey('C')" class="key-btn h-8 rounded-xl bg-surfaceLight border border-white/10 font-mono font-extrabold text-xs text-neonCyan">C</button>
+          <button onclick="appendKey('SPN ')" class="key-btn h-8 rounded-xl bg-surfaceLight border border-white/10 font-mono font-bold text-[9px] text-neonAmber">SPN</button>
+          <button onclick="appendKey('FMI ')" class="key-btn h-8 rounded-xl bg-surfaceLight border border-white/10 font-mono font-bold text-[9px] text-neonAmber">FMI</button>
+          <button onclick="appendKey('ECU ')" class="key-btn h-8 rounded-xl bg-surfaceLight border border-white/10 font-mono font-bold text-[9px] text-neonAmber">ECU</button>
+          <button onclick="appendKey('-')" class="key-btn h-8 rounded-xl bg-surfaceLight border border-white/10 font-mono font-extrabold text-xs text-neonPurple">-</button>
+        </div>
+
+        <div class="grid grid-cols-4 gap-1">
+          <button onclick="appendKey('1')" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-base text-white">1</button>
+          <button onclick="appendKey('2')" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-base text-white">2</button>
+          <button onclick="appendKey('3')" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-base text-white">3</button>
+          <button onclick="backspaceKey()" class="key-btn h-10 rounded-2xl bg-surfaceLight border border-white/10 flex items-center justify-center text-slate-300" title="Apagar">
+            <i data-lucide="delete" class="w-4 h-4"></i>
+          </button>
+
+          <button onclick="appendKey('4')" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-base text-white">4</button>
+          <button onclick="appendKey('5')" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-base text-white">5</button>
+          <button onclick="appendKey('6')" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-base text-white">6</button>
+          <button onclick="clearDisplayKey()" data-i18n="clearBtn" class="key-btn h-10 rounded-2xl bg-neonRed/15 border border-neonRed/30 font-mono font-extrabold text-[10px] text-neonRed">LIMPAR</button>
+
+          <button onclick="appendKey('7')" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-base text-white">7</button>
+          <button onclick="appendKey('8')" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-base text-white">8</button>
+          <button onclick="appendKey('9')" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-base text-white">9</button>
+          <button onclick="appendKey('.')" class="key-btn h-10 rounded-2xl bg-surfaceLight border border-white/10 font-mono font-extrabold text-base text-slate-300">.</button>
+
+          <button onclick="appendKey(' ')" data-i18n="spaceBtn" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-[9px] text-slate-400">ESPAÇO</button>
+          <button onclick="appendKey('0')" class="key-btn h-10 rounded-2xl bg-surface border border-white/[0.06] font-mono font-bold text-base text-white">0</button>
+          <button onclick="executeDiagnosticSearch()" class="col-span-2 h-10 rounded-2xl bg-gradient-to-r from-neonCyan to-[#00B8D4] text-black font-black text-[11px] tracking-wider uppercase shadow-[0_0_25px_rgba(0,240,255,0.35)] active:scale-95 transition flex items-center justify-center gap-1.5">
+            <i data-lucide="cpu" class="w-4 h-4"></i>
+            <span data-i18n="decodeAiBtn">DECODIFICAR COM IA</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== OVERLAY LAUDO TÉCNICO ==================== -->
+    <section id="view-result-overlay" class="hidden absolute inset-0 bg-oled z-30 flex flex-col">
+      <div class="px-4 pt-3.5 pb-2 flex items-center justify-between bg-gradient-to-b from-black via-black/95 to-transparent z-20 shrink-0">
+        <button onclick="closeResultOverlay()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surfaceLight border border-white/10 text-xs font-bold text-white active:scale-95 transition">
+          <i data-lucide="chevron-left" class="w-4 h-4 text-neonCyan"></i>
+          <span data-i18n="backScannerBtn">Voltar ao Scanner</span>
+        </button>
+        <span data-i18n="techReportBadge" class="text-[10px] font-mono text-neonAmber">LAUDO TÉCNICO • INTERATIVO</span>
+      </div>
+      <div id="result-card-container" class="flex-1 overflow-y-auto no-scrollbar pb-20 px-4"></div>
+    </section>
+
+    <!-- ==================== ABA 2: FEED DE FALHAS (ESTILO TIKTOK) ==================== -->
+    <section id="view-feed" class="hidden flex-1 h-full overflow-hidden relative">
+      <div class="absolute top-0 inset-x-0 px-4 pt-2.5 pb-4 bg-gradient-to-b from-black/95 via-black/80 to-transparent z-20 flex items-center justify-between pointer-events-none">
+        <div class="pointer-events-auto">
+          <span data-i18n="feedTitle" class="text-xs font-black tracking-wider uppercase text-white">Feed de Falhas</span>
+          <span id="feed-filter-subtitle" data-i18n="feedSwipeHint" class="block text-[10px] font-mono text-neonCyan">Deslize para cima/baixo ↕</span>
+        </div>
+        <div class="pointer-events-auto flex items-center gap-1.5">
+          <button onclick="scrollFeedBy(-1)" class="w-7 h-7 rounded-full bg-surfaceLight/90 border border-white/15 flex items-center justify-center text-white active:scale-90" title="Anterior">
+            <i data-lucide="chevron-up" class="w-4 h-4"></i>
+          </button>
+          <button onclick="scrollFeedBy(1)" class="w-7 h-7 rounded-full bg-surfaceLight/90 border border-white/15 flex items-center justify-center text-white active:scale-90" title="Próximo">
+            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+          </button>
+          <button onclick="cycleFeedCategoryFilter()" id="feed-filter-btn" class="text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-surfaceLight/90 backdrop-blur-md text-neonAmber border border-neonAmber/30 active:scale-95">
+            Todas
+          </button>
+        </div>
+      </div>
+
+      <div id="feed-snap-list" class="snap-feed no-scrollbar pb-16"></div>
+    </section>
+
+    <!-- ==================== ABA 3: CHAT IA COPILOTO ==================== -->
+    <section id="view-chat" class="hidden flex-1 flex flex-col h-full overflow-hidden bg-oled">
+      <div class="px-4 py-2 bg-surface/95 border-b border-white/10 shrink-0 flex items-center justify-between">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-neonCyan/25 to-neonPurple/25 border border-neonCyan/40 flex items-center justify-center text-neonCyan shrink-0">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="font-black text-xs text-white truncate">DiagCore AI • <span id="chat-operator-name" class="text-neonCyan">Operador</span></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-neonGreen shrink-0"></span>
+            </div>
+            <span id="chat-context-label" data-i18n="chatAnyTopicSubtitle" class="text-[10px] font-mono text-slate-400 truncate block">
+              Responde qualquer assunto • Conhece seu nome e idade
+            </span>
+          </div>
+        </div>
+
+        <button onclick="resetChatConversation()" class="px-2.5 py-1 rounded-full bg-surfaceLight border border-white/10 text-[10px] font-bold text-slate-300 active:scale-95 shrink-0">
+          <span data-i18n="newChatBtn">Nova Conversa</span>
+        </button>
+      </div>
+
+      <!-- Modos Especializados do Chat IA -->
+      <div class="px-4 py-1.5 bg-black/60 border-b border-white/[0.06] flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+        <button onclick="setChatMode('general')" data-cmode="general" class="chat-mode-btn shrink-0 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-neonCyan text-black transition">
+          Geral & Diagnóstico
+        </button>
+        <button onclick="setChatMode('electrical')" data-cmode="electrical" class="chat-mode-btn shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold bg-surfaceLight text-slate-300 border border-white/10 transition">
+          Elétrica & Pinagem
+        </button>
+        <button onclick="setChatMode('bench')" data-cmode="bench" class="chat-mode-btn shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold bg-surfaceLight text-slate-300 border border-white/10 transition">
+          Bancada & Medições
+        </button>
+      </div>
+
+      <div id="chat-messages-stream" class="flex-1 overflow-y-auto no-scrollbar px-4 py-3 space-y-3"></div>
+
+      <div class="pb-[68px] pt-2 bg-black border-t border-white/10 shrink-0">
+        <div id="chat-quick-chips" class="px-4 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar"></div>
+
+        <div class="px-3 flex items-center gap-2">
+          <input
+            id="chat-text-input"
+            type="text"
+            placeholder="Pergunte qualquer coisa ou sobre seu perfil..."
+            class="flex-1 h-11 px-4 rounded-2xl bg-surfaceLight border border-white/10 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-neonCyan"
+            onkeydown="if(event.key==='Enter') sendChatMessage()"
+          />
+          <button onclick="sendChatMessage()" class="w-11 h-11 rounded-2xl bg-neonCyan text-black flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(0,240,255,0.3)] active:scale-90 transition">
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== ABA 4: CORREÇÕES TÉCNICAS & BUGS ==================== -->
+    <section id="view-fixes" class="hidden flex-1 flex flex-col h-full overflow-hidden bg-oled">
+      <div class="px-4 py-2.5 bg-surface/95 border-b border-white/10 shrink-0 flex items-center justify-between">
+        <div>
+          <span data-i18n="fixesTitle" class="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5">
+            <i data-lucide="wrench" class="w-3.5 h-3.5 text-neonAmber"></i>
+            Correções Técnicas & Bugs
+          </span>
+          <span data-i18n="fixesSubtitle" class="block text-[10px] font-mono text-slate-400">Reporte bugs ou solicite ajustes de códigos/máquinas</span>
+        </div>
+        <span id="fixes-open-badge" class="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-neonAmber/15 text-neonAmber border border-neonAmber/30">
+          0 abertos
+        </span>
+      </div>
+
+      <div class="flex-1 overflow-y-auto no-scrollbar px-4 py-3 pb-24 space-y-4">
+        <div class="p-3.5 rounded-3xl bg-surface border border-white/10 space-y-3">
+          <div class="flex items-center justify-between">
+            <span data-i18n="newTicketTitle" class="text-[11px] font-black text-neonCyan uppercase tracking-wider">+ Registrar Bug ou Correção</span>
+            <span class="text-[9px] font-mono text-slate-500">TICKET</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label data-i18n="moduleLabel" class="block text-[10px] font-bold text-slate-400 mb-1">Categoria / Área</label>
+              <select id="fix-module" class="w-full h-10 px-2.5 rounded-xl bg-surfaceLight border border-white/10 text-xs text-white focus:outline-none focus:border-neonCyan">
+                <option value="Bug de Interface">Bug de Interface</option>
+                <option value="Código / Banco Técnico">Código / Banco Técnico</option>
+                <option value="Tradução">Tradução</option>
+                <option value="Scanner / Protocolo">Scanner / Protocolo</option>
+                <option value="Chat IA">Chat IA</option>
+              </select>
+            </div>
+
+            <div>
+              <label data-i18n="priorityLabel" class="block text-[10px] font-bold text-slate-400 mb-1">Prioridade</label>
+              <div class="grid grid-cols-3 gap-1 bg-oled p-1 rounded-xl border border-white/10 h-10">
+                <button type="button" onclick="setFixPriority('Normal')" data-prio="Normal" class="fix-prio-btn rounded-lg text-[10px] font-extrabold bg-neonCyan text-black transition">Normal</button>
+                <button type="button" onclick="setFixPriority('Alta')" data-prio="Alta" class="fix-prio-btn rounded-lg text-[10px] font-bold text-slate-400 transition">Alta</button>
+                <button type="button" onclick="setFixPriority('Crítica')" data-prio="Crítica" class="fix-prio-btn rounded-lg text-[10px] font-bold text-slate-400 transition">Crítica</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label data-i18n="bugTitleLabel" class="block text-[10px] font-bold text-slate-400 mb-1">Título do Bug ou Ajuste Técnico</label>
+            <input
+              id="fix-title"
+              type="text"
+              placeholder="Ex: Ajustar leitura de código ou interface"
+              class="w-full h-10 px-3.5 rounded-xl bg-surfaceLight border border-white/10 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-neonCyan"
+            />
+          </div>
+
+          <div>
+            <label data-i18n="bugDescLabel" class="block text-[10px] font-bold text-slate-400 mb-1">Descrição Detalhada</label>
+            <textarea
+              id="fix-desc"
+              rows="2"
+              placeholder="Descreva o bug encontrado ou a correção técnica desejada..."
+              class="w-full p-3 rounded-xl bg-surfaceLight border border-white/10 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-neonCyan resize-none"
+            ></textarea>
+          </div>
+
+          <button onclick="submitTechnicalFix()" class="w-full h-11 rounded-2xl bg-gradient-to-r from-neonAmber to-[#FF9100] text-black font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(255,184,0,0.28)] active:scale-95 transition flex items-center justify-center gap-2">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span data-i18n="registerFixBtn">Registrar Correção Técnica</span>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between gap-1.5">
+          <span data-i18n="loggedTicketsLabel" class="text-[10px] font-mono font-bold uppercase text-slate-400">Chamados Registrados</span>
+          <div class="flex gap-1 overflow-x-auto no-scrollbar">
+            <button onclick="setFixFilter('ALL')" data-ffilter="ALL" data-i18n="filterAll" class="fix-filter-pill px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-neonCyan text-black shrink-0">Todos</button>
+            <button onclick="setFixFilter('Aberto')" data-ffilter="Aberto" data-i18n="filterOpen" class="fix-filter-pill px-2.5 py-1 rounded-full text-[10px] font-bold bg-surfaceLight text-slate-300 shrink-0">Abertos</button>
+            <button onclick="setFixFilter('Em Análise')" data-ffilter="Em Análise" data-i18n="filterReview" class="fix-filter-pill px-2.5 py-1 rounded-full text-[10px] font-bold bg-surfaceLight text-slate-300 shrink-0">Em Análise</button>
+            <button onclick="setFixFilter('Corrigido')" data-ffilter="Corrigido" data-i18n="filterFixed" class="fix-filter-pill px-2.5 py-1 rounded-full text-[10px] font-bold bg-surfaceLight text-slate-300 shrink-0">Corrigidos</button>
+          </div>
+        </div>
+
+        <div id="fixes-tickets-list" class="space-y-2.5"></div>
+
+        <!-- Log de Versões do Sistema -->
+        <div class="p-3.5 rounded-3xl bg-surface/80 border border-white/[0.07] space-y-2">
+          <span data-i18n="changelogTitle" class="text-[10px] font-mono font-bold uppercase tracking-wider text-neonCyan block">Log de Atualizações do Sistema</span>
+          <div class="text-[11px] text-slate-300 space-y-1.5">
+            <p><strong class="text-white font-mono">v6.4</strong> — Cadastro simplificado (Nome + Idade), 10 idiomas nas Configurações e Chat IA com memória de perfil.</p>
+            <p><strong class="text-white font-mono">v6.2</strong> — 8 categorias de veículos e máquinas, 12V/24V automático e Feed estilo TikTok com checklist de bancada.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== ABA 5: CONFIGURAÇÕES COMPLETAS ==================== -->
+    <section id="view-settings" class="hidden flex-1 flex flex-col h-full overflow-hidden bg-oled">
+      <div class="px-4 py-2.5 bg-surface/95 border-b border-white/10 shrink-0 flex items-center justify-between">
+        <div>
+          <span data-i18n="settingsTitle" class="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5">
+            <i data-lucide="sliders" class="w-3.5 h-3.5 text-neonCyan"></i>
+            Configurações do Sistema
+          </span>
+          <span data-i18n="settingsSubtitle" class="block text-[10px] font-mono text-slate-400">Idioma, Perfil, Aparência, Telemetria, IA e Dados</span>
+        </div>
+        <span id="settings-active-lang-badge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-neonCyan/15 text-neonCyan border border-neonCyan/30">
+          PT-BR
+        </span>
+      </div>
+
+      <div class="flex-1 overflow-y-auto no-scrollbar px-4 py-3 pb-24 space-y-4">
+
+        <!-- 1. Idioma e Tradução (10 Idiomas) -->
+        <div class="p-3.5 rounded-3xl bg-surface border border-neonCyan/30 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span data-i18n="secLanguageTitle" class="text-[11px] font-black text-neonCyan uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="languages" class="w-3.5 h-3.5"></i>
+              Idioma e Tradução (10 Idiomas)
+            </span>
+            <span class="text-[9px] font-mono text-neonGreen">10 LANGS</span>
+          </div>
+          <p data-i18n="secLanguageDesc" class="text-[11px] text-slate-400 leading-snug">
+            Traduza menus, rótulos, placeholders, boas-vindas e sugestões do Chat IA e leitura por voz.
+          </p>
+          <div id="language-selector-grid" class="grid grid-cols-2 gap-1.5 pt-1"></div>
+        </div>
+
+        <!-- 2. Perfil e Identidade (Editar Nome e Idade) -->
+        <div class="p-3.5 rounded-3xl bg-surface border border-white/10 space-y-3">
+          <div class="flex items-center justify-between">
+            <span data-i18n="secProfileTitle" class="text-[11px] font-black text-neonAmber uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="user-cog" class="w-3.5 h-3.5"></i>
+              Perfil e Identidade
+            </span>
+            <span id="settings-profile-summary" class="text-[10px] font-mono text-slate-300">Operador • -- anos</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
+              <label data-i18n="yourNameLabel" class="block text-[10px] font-bold text-slate-400 mb-1">Seu Nome</label>
+              <input id="cfg-edit-name" type="text" class="w-full h-10 px-3 rounded-xl bg-surfaceLight border border-white/10 text-xs text-white focus:outline-none focus:border-neonCyan" />
+            </div>
+            <div>
+              <label data-i18n="yourAgeLabel" class="block text-[10px] font-bold text-slate-400 mb-1">Sua Idade</label>
+              <input id="cfg-edit-age" type="number" min="12" max="110" class="w-full h-10 px-3 rounded-xl bg-surfaceLight border border-white/10 text-xs text-white focus:outline-none focus:border-neonCyan" />
+            </div>
+          </div>
+
+          <p id="cfg-profile-error" class="hidden text-[11px] font-semibold text-neonRed bg-neonRed/10 border border-neonRed/30 px-3 py-2 rounded-xl"></p>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="saveSettingsProfile()" data-i18n="saveProfileBtn" class="h-10 rounded-xl bg-neonGreen text-black font-black text-[11px] uppercase active:scale-95 transition">
+              Salvar Nome & Idade
+            </button>
+            <button onclick="returnToOnboardingScreen()" data-i18n="reopenOnboardingBtn" class="h-10 rounded-xl bg-surfaceLight border border-white/15 text-slate-200 font-bold text-[11px] active:scale-95 transition">
+              Tela Inicial (1º Acesso)
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Aparência e Experiência -->
+        <div class="p-3.5 rounded-3xl bg-surface border border-white/10 space-y-3">
+          <span data-i18n="secAppearanceTitle" class="text-[11px] font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="palette" class="w-3.5 h-3.5 text-neonPurple"></i>
+            Aparência e Experiência
+          </span>
+
+          <div>
+            <label data-i18n="accentThemeLabel" class="block text-[10px] font-bold text-slate-400 mb-1.5">Cor de Destaque</label>
+            <div class="grid grid-cols-3 gap-1.5">
+              <button onclick="setAccentTheme('cyan')" data-accent="cyan" class="accent-btn py-2 rounded-xl bg-surfaceLight border border-neonCyan text-[10px] font-extrabold text-neonCyan">Ciano</button>
+              <button onclick="setAccentTheme('copper')" data-accent="copper" class="accent-btn py-2 rounded-xl bg-surfaceLight border border-white/10 text-[10px] font-bold text-neonAmber">Cobre</button>
+              <button onclick="setAccentTheme('emerald')" data-accent="emerald" class="accent-btn py-2 rounded-xl bg-surfaceLight border border-white/10 text-[10px] font-bold text-neonGreen">Esmeralda</button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between py-1">
+            <div>
+              <span data-i18n="highContrastLabel" class="text-xs font-bold text-white block">Alto Contraste OLED</span>
+              <span data-i18n="highContrastDesc" class="text-[10px] text-slate-400">Preto absoluto e bordas destacadas</span>
+            </div>
+            <button onclick="toggleSettingBool('highContrast')" id="toggle-highContrast" class="w-11 h-6 rounded-full bg-surfaceLight border border-white/15 p-0.5 transition">
+              <div class="w-5 h-5 rounded-full bg-slate-400 transition-transform"></div>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between py-1">
+            <div>
+              <span data-i18n="compactUiLabel" class="text-xs font-bold text-white block">Densidade Compacta</span>
+              <span data-i18n="compactUiDesc" class="text-[10px] text-slate-400">Mais espaço útil na tela do Scanner</span>
+            </div>
+            <button onclick="toggleSettingBool('compactUi')" id="toggle-compactUi" class="w-11 h-6 rounded-full bg-surfaceLight border border-white/15 p-0.5 transition">
+              <div class="w-5 h-5 rounded-full bg-slate-400 transition-transform"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. Diagnóstico e Telemetria -->
+        <div class="p-3.5 rounded-3xl bg-surface border border-white/10 space-y-3">
+          <span data-i18n="secTelemetryTitle" class="text-[11px] font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="gauge" class="w-3.5 h-3.5 text-neonGreen"></i>
+            Diagnóstico e Telemetria
+          </span>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label data-i18n="pressureUnitLabel" class="block text-[10px] font-bold text-slate-400 mb-1">Unidade de Pressão</label>
+              <select id="cfg-pressure-unit" onchange="updateTelemetryPref('pressureUnit', this.value)" class="w-full h-10 px-2.5 rounded-xl bg-surfaceLight border border-white/10 text-xs text-white focus:outline-none focus:border-neonCyan">
+                <option value="bar">Bar</option>
+                <option value="psi">PSI</option>
+              </select>
+            </div>
+            <div>
+              <label data-i18n="tempUnitLabel" class="block text-[10px] font-bold text-slate-400 mb-1">Unidade de Temperatura</label>
+              <select id="cfg-temp-unit" onchange="updateTelemetryPref('tempUnit', this.value)" class="w-full h-10 px-2.5 rounded-xl bg-surfaceLight border border-white/10 text-xs text-white focus:outline-none focus:border-neonCyan">
+                <option value="C">°C (Celsius)</option>
+                <option value="F">°F (Fahrenheit)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between py-1">
+            <div>
+              <span data-i18n="autoSpeakLabel" class="text-xs font-bold text-white block">Leitura Automática por Voz</span>
+              <span data-i18n="autoSpeakDesc" class="text-[10px] text-slate-400">Falar respostas da IA no idioma selecionado</span>
+            </div>
+            <button onclick="toggleSettingBool('autoSpeak')" id="toggle-autoSpeak" class="w-11 h-6 rounded-full bg-surfaceLight border border-white/15 p-0.5 transition">
+              <div class="w-5 h-5 rounded-full bg-slate-400 transition-transform"></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 5. Assistente IA e Dados -->
+        <div class="p-3.5 rounded-3xl bg-surface border border-white/10 space-y-3">
+          <span data-i18n="secAiDataTitle" class="text-[11px] font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="database" class="w-3.5 h-3.5 text-neonCyan"></i>
+            Assistente IA & Dados
+          </span>
+
+          <div>
+            <label data-i18n="aiStyleLabel" class="block text-[10px] font-bold text-slate-400 mb-1">Estilo de Resposta da IA</label>
+            <select id="cfg-ai-style" onchange="updateTelemetryPref('aiStyle', this.value)" class="w-full h-10 px-2.5 rounded-xl bg-surfaceLight border border-white/10 text-xs text-white focus:outline-none focus:border-neonCyan">
+              <option value="concise">Direto e Técnico</option>
+              <option value="detailed">Detalhado e Didático</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 pt-1">
+            <button onclick="resetChatConversation(); showNativeToast('Chat IA limpo')" data-i18n="clearChatBtn" class="h-10 rounded-xl bg-surfaceLight border border-white/15 text-slate-200 font-bold text-[10px] active:scale-95 transition">
+              Limpar Chat
+            </button>
+            <button onclick="resetDemoData()" data-i18n="resetDemoBtn" class="h-10 rounded-xl bg-surfaceLight border border-neonAmber/30 text-neonAmber font-bold text-[10px] active:scale-95 transition">
+              Reset Demo
+            </button>
+            <button onclick="factoryResetAll()" data-i18n="factoryResetBtn" class="h-10 rounded-xl bg-neonRed/15 border border-neonRed/35 text-neonRed font-extrabold text-[10px] active:scale-95 transition">
+              Restaurar Tudo
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== GAVETA: BUSCAR MARCA ==================== -->
+    <div id="brand-drawer-modal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col justify-end">
+      <div class="bottom-sheet-anim bg-surface border-t border-white/15 rounded-t-[32px] max-h-[84%] flex flex-col overflow-hidden">
+        <div class="px-5 pt-4 pb-3 border-b border-white/10 flex items-center justify-between shrink-0">
+          <div>
+            <h3 data-i18n="selectBrandTitle" class="text-sm font-black text-white">Selecionar Montadora</h3>
+            <p id="drawer-category-label" class="text-[11px] font-mono text-neonCyan">Todas as categorias disponíveis</p>
+          </div>
+          <button onclick="closeBrandDrawer()" class="w-8 h-8 rounded-full bg-surfaceLight flex items-center justify-center text-slate-300 font-bold">✕</button>
+        </div>
+
+        <div class="px-4 py-2.5 shrink-0">
+          <input
+            id="brand-search-input"
+            type="text"
+            placeholder="Pesquisar marca..."
+            oninput="filterBrandDrawerList()"
+            class="w-full h-10 px-3.5 rounded-2xl bg-surfaceLight border border-white/10 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-neonCyan"
+          />
+        </div>
+
+        <div id="brand-drawer-grid" class="flex-1 overflow-y-auto no-scrollbar px-4 pb-8 grid grid-cols-2 gap-2"></div>
+      </div>
+    </div>
+
+    <!-- ==================== GAVETA: CÓDIGOS SALVOS ==================== -->
+    <div id="saved-drawer-modal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col justify-end">
+      <div class="bottom-sheet-anim bg-surface border-t border-white/15 rounded-t-[32px] max-h-[82%] flex flex-col overflow-hidden">
+        <div class="px-5 pt-4 pb-3 border-b border-white/10 flex items-center justify-between shrink-0">
+          <div>
+            <h3 data-i18n="savedCodesTitle" class="text-sm font-black text-white">Códigos Salvos</h3>
+            <p data-i18n="savedCodesSubtitle" class="text-[11px] text-slate-400">Diagnósticos salvos no dispositivo</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="clearSavedCodes()" data-i18n="clearBtn" class="text-[10px] font-bold text-neonRed px-2.5 py-1 rounded-full bg-neonRed/10 border border-neonRed/20">Limpar</button>
+            <button onclick="closeSavedDrawer()" class="w-8 h-8 rounded-full bg-surfaceLight flex items-center justify-center text-slate-300 font-bold">✕</button>
+          </div>
+        </div>
+        <div id="saved-list-container" class="flex-1 overflow-y-auto no-scrollbar px-4 py-3 pb-8 space-y-2"></div>
+      </div>
+    </div>
+
+    <!-- ==================== BARRA INFERIOR DE NAVEGAÇÃO ==================== -->
+    <nav class="absolute bottom-0 inset-x-0 h-16 bg-black/95 backdrop-blur-xl border-t border-white/10 px-1 flex items-center justify-around z-40">
+      <button onclick="switchAppTab('scanner')" data-tab="scanner" class="app-nav-btn flex flex-col items-center justify-center w-1/5 h-full text-neonCyan transition">
+        <i data-lucide="scan-line" class="w-4 h-4 mb-0.5"></i>
+        <span data-i18n="navScanner" class="text-[9px] font-extrabold tracking-tight truncate">Scanner</span>
+      </button>
+
+      <button onclick="switchAppTab('feed')" data-tab="feed" class="app-nav-btn flex flex-col items-center justify-center w-1/5 h-full text-slate-500 hover:text-slate-300 transition">
+        <i data-lucide="flame" class="w-4 h-4 mb-0.5"></i>
+        <span data-i18n="navFeed" class="text-[9px] font-bold tracking-tight truncate">Feed</span>
+      </button>
+
+      <button onclick="switchAppTab('chat')" data-tab="chat" class="app-nav-btn flex flex-col items-center justify-center w-1/5 h-full text-slate-500 hover:text-slate-300 transition">
+        <i data-lucide="sparkles" class="w-4 h-4 mb-0.5"></i>
+        <span data-i18n="navChat" class="text-[9px] font-bold tracking-tight truncate">Chat IA</span>
+      </button>
+
+      <button onclick="switchAppTab('fixes')" data-tab="fixes" class="app-nav-btn flex flex-col items-center justify-center w-1/5 h-full text-slate-500 hover:text-slate-300 transition">
+        <i data-lucide="wrench" class="w-4 h-4 mb-0.5"></i>
+        <span data-i18n="navFixes" class="text-[9px] font-bold tracking-tight truncate">Correções</span>
+      </button>
+
+      <button onclick="switchAppTab('settings')" data-tab="settings" class="app-nav-btn flex flex-col items-center justify-center w-1/5 h-full text-slate-500 hover:text-slate-300 transition">
+        <i data-lucide="sliders" class="w-4 h-4 mb-0.5"></i>
+        <span data-i18n="navSettings" class="text-[9px] font-bold tracking-tight truncate">Ajustes</span>
+      </button>
+    </nav>
+
+    <!-- TOAST NATIVO -->
+    <div id="native-toast" class="pointer-events-none opacity-0 translate-y-3 transition-all duration-200 absolute bottom-20 left-1/2 -translate-x-1/2 bg-surfaceElevated/95 backdrop-blur-md text-white border border-white/15 px-4 py-2 rounded-full text-xs font-bold shadow-2xl z-50 whitespace-nowrap">
+      Mensagem
+    </div>
+
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. 10 IDIOMAS COMPLETOS (CONTROLADOS NAS CONFIGURAÇÕES)
+    // =========================================================================
+    const SUPPORTED_LANGUAGES = [
+      { code: 'pt', badge: 'PT-BR', native: 'Português', tts: 'pt-BR', dir: 'ltr' },
+      { code: 'en', badge: 'EN', native: 'English', tts: 'en-US', dir: 'ltr' },
+      { code: 'es', badge: 'ES', native: 'Español', tts: 'es-ES', dir: 'ltr' },
+      { code: 'fr', badge: 'FR', native: 'Français', tts: 'fr-FR', dir: 'ltr' },
+      { code: 'de', badge: 'DE', native: 'Deutsch', tts: 'de-DE', dir: 'ltr' },
+      { code: 'it', badge: 'IT', native: 'Italiano', tts: 'it-IT', dir: 'ltr' },
+      { code: 'ja', badge: 'JA', native: '日本語', tts: 'ja-JP', dir: 'ltr' },
+      { code: 'ko', badge: 'KO', native: '한국어', tts: 'ko-KR', dir: 'ltr' },
+      { code: 'ru', badge: 'RU', native: 'Русский', tts: 'ru-RU', dir: 'ltr' },
+      { code: 'ar', badge: 'AR', native: 'العربية', tts: 'ar-SA', dir: 'rtl' }
+    ];
+
+    const UI_TRANSLATIONS = {
+      pt: {
+        quickAccessBadge: 'ACESSO RÁPIDO',
+        terminalTag: 'Engenharia & Telemetria',
+        onboardTitle: 'Identificação do Operador',
+        onboardSubtitle: 'Informe apenas seu Nome e sua Idade para liberar o Scanner multi-protocolo, Feed de Falhas, Chat IA, Correções e Configurações.',
+        yourNameLabel: 'Seu Nome',
+        yourAgeLabel: 'Sua Idade',
+        enterAppBtn: 'Entrar no Aplicativo',
+        busLabel: 'BARRAMENTO',
+        step1Vehicle: '1. Veículo / Máquina',
+        step2Brand: '2. Montadora',
+        searchBrandBtn: 'Buscar Marca',
+        tryLabel: 'TESTAR:',
+        clearBtn: 'LIMPAR',
+        spaceBtn: 'ESPAÇO',
+        decodeAiBtn: 'DECODIFICAR COM IA',
+        backScannerBtn: 'Voltar ao Scanner',
+        techReportBadge: 'LAUDO TÉCNICO • INTERATIVO',
+        feedTitle: 'Feed de Falhas',
+        feedSwipeHint: 'Deslize para cima/baixo ↕',
+        chatAnyTopicSubtitle: 'Responde qualquer assunto • Conhece seu nome e idade',
+        newChatBtn: 'Nova Conversa',
+        fixesTitle: 'Correções Técnicas & Bugs',
+        fixesSubtitle: 'Reporte bugs ou solicite ajustes de códigos/máquinas',
+        newTicketTitle: '+ Registrar Bug ou Correção',
+        moduleLabel: 'Categoria / Área',
+        priorityLabel: 'Prioridade',
+        bugTitleLabel: 'Título do Bug ou Ajuste Técnico',
+        bugDescLabel: 'Descrição Detalhada',
+        registerFixBtn: 'Registrar Correção Técnica',
+        loggedTicketsLabel: 'Chamados Registrados',
+        filterAll: 'Todos',
+        filterOpen: 'Abertos',
+        filterReview: 'Em Análise',
+        filterFixed: 'Corrigidos',
+        changelogTitle: 'Log de Atualizações do Sistema',
+        settingsTitle: 'Configurações do Sistema',
+        settingsSubtitle: 'Idioma, Perfil, Aparência, Telemetria, IA e Dados',
+        secLanguageTitle: 'Idioma e Tradução (10 Idiomas)',
+        secLanguageDesc: 'Traduza menus, rótulos, placeholders, boas-vindas e sugestões do Chat IA e leitura por voz.',
+        secProfileTitle: 'Perfil e Identidade',
+        saveProfileBtn: 'Salvar Nome & Idade',
+        reopenOnboardingBtn: 'Tela Inicial (1º Acesso)',
+        secAppearanceTitle: 'Aparência e Experiência',
+        accentThemeLabel: 'Cor de Destaque',
+        highContrastLabel: 'Alto Contraste OLED',
+        highContrastDesc: 'Preto absoluto e bordas destacadas',
+        compactUiLabel: 'Densidade Compacta',
+        compactUiDesc: 'Mais espaço útil na tela do Scanner',
+        secTelemetryTitle: 'Diagnóstico e Telemetria',
+        pressureUnitLabel: 'Unidade de Pressão',
+        tempUnitLabel: 'Unidade de Temperatura',
+        autoSpeakLabel: 'Leitura Automática por Voz',
+        autoSpeakDesc: 'Falar respostas da IA no idioma selecionado',
+        secAiDataTitle: 'Assistente IA & Dados',
+        aiStyleLabel: 'Estilo de Resposta da IA',
+        clearChatBtn: 'Limpar Chat',
+        resetDemoBtn: 'Reset Demo',
+        factoryResetBtn: 'Restaurar Tudo',
+        selectBrandTitle: 'Selecionar Montadora',
+        savedCodesTitle: 'Códigos Salvos',
+        savedCodesSubtitle: 'Diagnósticos salvos no dispositivo',
+        navScanner: 'Scanner',
+        navFeed: 'Feed',
+        navChat: 'Chat IA',
+        navFixes: 'Correções',
+        navSettings: 'Ajustes',
+        codePlaceholder: 'DIGITE O CÓDIGO DE FALHA...',
+        chatPlaceholder: 'Pergunte qualquer coisa ou sobre seu perfil...'
+      },
+      en: {
+        quickAccessBadge: 'QUICK ACCESS',
+        terminalTag: 'Engineering & Telemetry',
+        onboardTitle: 'Operator Identification',
+        onboardSubtitle: 'Enter only your Name and Age to unlock the multi-protocol Scanner, Fault Feed, AI Chat, Fixes, and Settings.',
+        yourNameLabel: 'Your Name',
+        yourAgeLabel: 'Your Age',
+        enterAppBtn: 'Enter Application',
+        busLabel: 'BUS',
+        step1Vehicle: '1. Vehicle / Machine',
+        step2Brand: '2. Brand',
+        searchBrandBtn: 'Search Brand',
+        tryLabel: 'TRY:',
+        clearBtn: 'CLEAR',
+        spaceBtn: 'SPACE',
+        decodeAiBtn: 'DECODE WITH AI',
+        backScannerBtn: 'Back to Scanner',
+        techReportBadge: 'TECH REPORT • INTERACTIVE',
+        feedTitle: 'Fault Feed',
+        feedSwipeHint: 'Swipe up/down ↕',
+        chatAnyTopicSubtitle: 'Answers any topic • Knows your name and age',
+        newChatBtn: 'New Chat',
+        fixesTitle: 'Technical Fixes & Bugs',
+        fixesSubtitle: 'Report bugs or request code/machine updates',
+        newTicketTitle: '+ Log Bug or Fix',
+        moduleLabel: 'Category / Area',
+        priorityLabel: 'Priority',
+        bugTitleLabel: 'Bug or Technical Fix Title',
+        bugDescLabel: 'Detailed Description',
+        registerFixBtn: 'Register Technical Fix',
+        loggedTicketsLabel: 'Logged Tickets',
+        filterAll: 'All',
+        filterOpen: 'Open',
+        filterReview: 'In Review',
+        filterFixed: 'Fixed',
+        changelogTitle: 'System Changelog',
+        settingsTitle: 'System Settings',
+        settingsSubtitle: 'Language, Profile, Appearance, Telemetry, AI & Data',
+        secLanguageTitle: 'Language & Translation (10 Languages)',
+        secLanguageDesc: 'Translate menus, labels, placeholders, AI chat prompts, and voice readout.',
+        secProfileTitle: 'Profile & Identity',
+        saveProfileBtn: 'Save Name & Age',
+        reopenOnboardingBtn: 'Welcome Screen',
+        secAppearanceTitle: 'Appearance & Experience',
+        accentThemeLabel: 'Accent Color',
+        highContrastLabel: 'High Contrast OLED',
+        highContrastDesc: 'Pure pitch black and sharper borders',
+        compactUiLabel: 'Compact Density',
+        compactUiDesc: 'Extra space on Scanner screen',
+        secTelemetryTitle: 'Diagnostics & Telemetry',
+        pressureUnitLabel: 'Pressure Unit',
+        tempUnitLabel: 'Temperature Unit',
+        autoSpeakLabel: 'Auto Voice Readout',
+        autoSpeakDesc: 'Speak AI responses in active language',
+        secAiDataTitle: 'AI Assistant & Data',
+        aiStyleLabel: 'AI Response Style',
+        clearChatBtn: 'Clear Chat',
+        resetDemoBtn: 'Reset Demo',
+        factoryResetBtn: 'Factory Reset',
+        selectBrandTitle: 'Select Brand',
+        savedCodesTitle: 'Saved Codes',
+        savedCodesSubtitle: 'Diagnostics saved on device',
+        navScanner: 'Scanner',
+        navFeed: 'Feed',
+        navChat: 'AI Chat',
+        navFixes: 'Fixes',
+        navSettings: 'Settings',
+        codePlaceholder: 'ENTER FAULT CODE...',
+        chatPlaceholder: 'Ask anything or about your profile...'
+      },
+      es: {
+        quickAccessBadge: 'ACCESO RÁPIDO',
+        terminalTag: 'Ingeniería y Telemetría',
+        onboardTitle: 'Identificación del Operador',
+        onboardSubtitle: 'Ingresa solo tu Nombre y tu Edad para abrir el Escáner multiprotocolo, Feed de Fallas, Chat IA, Correcciones y Ajustes.',
+        yourNameLabel: 'Tu Nombre',
+        yourAgeLabel: 'Tu Edad',
+        enterAppBtn: 'Entrar a la App',
+        busLabel: 'BUS',
+        step1Vehicle: '1. Vehículo / Máquina',
+        step2Brand: '2. Marca',
+        searchBrandBtn: 'Buscar Marca',
+        tryLabel: 'PROBAR:',
+        clearBtn: 'LIMPIAR',
+        spaceBtn: 'ESPACIO',
+        decodeAiBtn: 'DECODIFICAR CON IA',
+        backScannerBtn: 'Volver al Escáner',
+        techReportBadge: 'INFORME TÉCNICO • INTERACTIVO',
+        feedTitle: 'Feed de Fallas',
+        feedSwipeHint: 'Desliza arriba/abajo ↕',
+        chatAnyTopicSubtitle: 'Responde cualquier tema • Conoce tu nombre y edad',
+        newChatBtn: 'Nuevo Chat',
+        fixesTitle: 'Correcciones Técnicas y Bugs',
+        fixesSubtitle: 'Reporta bugs o solicita ajustes de códigos/máquinas',
+        newTicketTitle: '+ Registrar Bug o Corrección',
+        moduleLabel: 'Categoría / Área',
+        priorityLabel: 'Prioridad',
+        bugTitleLabel: 'Título del Bug o Ajuste',
+        bugDescLabel: 'Descripción Detallada',
+        registerFixBtn: 'Registrar Corrección',
+        loggedTicketsLabel: 'Tickets Registrados',
+        filterAll: 'Todos',
+        filterOpen: 'Abiertos',
+        filterReview: 'En Análisis',
+        filterFixed: 'Corregidos',
+        changelogTitle: 'Registro de Actualizaciones',
+        settingsTitle: 'Ajustes del Sistema',
+        settingsSubtitle: 'Idioma, Perfil, Apariencia, Telemetría, IA y Datos',
+        secLanguageTitle: 'Idioma y Traducción (10 Idiomas)',
+        secLanguageDesc: 'Traduce menús, etiquetas, sugerencias del Chat IA y lectura por voz.',
+        secProfileTitle: 'Perfil e Identidad',
+        saveProfileBtn: 'Guardar Nombre y Edad',
+        reopenOnboardingBtn: 'Pantalla Inicial',
+        secAppearanceTitle: 'Apariencia y Experiencia',
+        accentThemeLabel: 'Color de Acento',
+        highContrastLabel: 'Alto Contraste OLED',
+        highContrastDesc: 'Negro puro y bordes definidos',
+        compactUiLabel: 'Densidad Compacta',
+        compactUiDesc: 'Más espacio en el Escáner',
+        secTelemetryTitle: 'Diagnóstico y Telemetría',
+        pressureUnitLabel: 'Unidad de Presión',
+        tempUnitLabel: 'Unidad de Temperatura',
+        autoSpeakLabel: 'Lectura Automática por Voz',
+        autoSpeakDesc: 'Leer respuestas IA en el idioma elegido',
+        secAiDataTitle: 'Asistente IA y Datos',
+        aiStyleLabel: 'Estilo de Respuesta IA',
+        clearChatBtn: 'Limpiar Chat',
+        resetDemoBtn: 'Reset Demo',
+        factoryResetBtn: 'Restaurar Todo',
+        selectBrandTitle: 'Seleccionar Marca',
+        savedCodesTitle: 'Códigos Guardados',
+        savedCodesSubtitle: 'Diagnósticos guardados en el equipo',
+        navScanner: 'Escáner',
+        navFeed: 'Feed',
+        navChat: 'Chat IA',
+        navFixes: 'Correcciones',
+        navSettings: 'Ajustes',
+        codePlaceholder: 'ESCRIBE EL CÓDIGO DE FALLA...',
+        chatPlaceholder: 'Pregunta cualquier cosa o sobre tu perfil...'
+      },
+      fr: {
+        quickAccessBadge: 'ACCÈS RAPIDE',
+        terminalTag: 'Ingénierie & Télémétrie',
+        onboardTitle: 'Identification de l’Opérateur',
+        onboardSubtitle: 'Saisissez uniquement votre Prénom et votre Âge pour débloquer Scanner, Feed, Chat IA, Corrections et Réglages.',
+        yourNameLabel: 'Votre Prénom',
+        yourAgeLabel: 'Votre Âge',
+        enterAppBtn: 'Entrer dans l’App',
+        busLabel: 'BUS',
+        step1Vehicle: '1. Véhicule / Machine',
+        step2Brand: '2. Marque',
+        searchBrandBtn: 'Chercher Marque',
+        tryLabel: 'TESTER :',
+        clearBtn: 'EFFACER',
+        spaceBtn: 'ESPACE',
+        decodeAiBtn: 'DÉCODER PAR IA',
+        backScannerBtn: 'Retour Scanner',
+        techReportBadge: 'RAPPORT TECH • INTERACTIF',
+        feedTitle: 'Fil des Pannes',
+        feedSwipeHint: 'Glisser haut/bas ↕',
+        chatAnyTopicSubtitle: 'Répond à tout • Connaît prénom et âge',
+        newChatBtn: 'Nouveau Chat',
+        fixesTitle: 'Corrections Techniques & Bugs',
+        fixesSubtitle: 'Signalez un bug ou demandez un ajustement',
+        newTicketTitle: '+ Ajouter Bug ou Correction',
+        moduleLabel: 'Catégorie / Zone',
+        priorityLabel: 'Priorité',
+        bugTitleLabel: 'Titre du Bug ou Ajustement',
+        bugDescLabel: 'Description Détaillée',
+        registerFixBtn: 'Enregistrer la Correction',
+        loggedTicketsLabel: 'Tickets Enregistrés',
+        filterAll: 'Tous',
+        filterOpen: 'Ouverts',
+        filterReview: 'En Analyse',
+        filterFixed: 'Corrigés',
+        changelogTitle: 'Journal des Mises à Jour',
+        settingsTitle: 'Réglages Système',
+        settingsSubtitle: 'Langue, Profil, Apparence, Télémétrie, IA & Données',
+        secLanguageTitle: 'Langue & Traduction (10 Langues)',
+        secLanguageDesc: 'Traduit menus, libellés, suggestions IA et synthèse vocale.',
+        secProfileTitle: 'Profil & Identité',
+        saveProfileBtn: 'Enregistrer Prénom & Âge',
+        reopenOnboardingBtn: 'Écran d’Accueil',
+        secAppearanceTitle: 'Apparence & Expérience',
+        accentThemeLabel: 'Couleur d’Accent',
+        highContrastLabel: 'Contraste Élevé OLED',
+        highContrastDesc: 'Noir profond et bordures nettes',
+        compactUiLabel: 'Densité Compacte',
+        compactUiDesc: 'Plus d’espace sur le Scanner',
+        secTelemetryTitle: 'Diagnostic & Télémétrie',
+        pressureUnitLabel: 'Unité de Pression',
+        tempUnitLabel: 'Unité de Température',
+        autoSpeakLabel: 'Lecture Vocale Auto',
+        autoSpeakDesc: 'Lire réponses IA dans la langue choisie',
+        secAiDataTitle: 'Assistant IA & Données',
+        aiStyleLabel: 'Style de Réponse IA',
+        clearChatBtn: 'Effacer Chat',
+        resetDemoBtn: 'Reset Démo',
+        factoryResetBtn: 'Réinitialiser',
+        selectBrandTitle: 'Choisir une Marque',
+        savedCodesTitle: 'Codes Enregistrés',
+        savedCodesSubtitle: 'Diagnostics sauvegardés sur l’appareil',
+        navScanner: 'Scanner',
+        navFeed: 'Flux',
+        navChat: 'Chat IA',
+        navFixes: 'Correctifs',
+        navSettings: 'Réglages',
+        codePlaceholder: 'SAISIR LE CODE DÉFAUT...',
+        chatPlaceholder: 'Demandez n’importe quoi ou sur votre profil...'
+      },
+      de: {
+        quickAccessBadge: 'SCHNELLZUGRIFF',
+        terminalTag: 'Engineering & Telemetrie',
+        onboardTitle: 'Bediener-Identifikation',
+        onboardSubtitle: 'Geben Sie nur Ihren Namen und Ihr Alter ein, um Scanner, Feed, KI-Chat, Korrekturen und Einstellungen zu öffnen.',
+        yourNameLabel: 'Ihr Name',
+        yourAgeLabel: 'Ihr Alter',
+        enterAppBtn: 'App Starten',
+        busLabel: 'BUS',
+        step1Vehicle: '1. Fahrzeug / Maschine',
+        step2Brand: '2. Marke',
+        searchBrandBtn: 'Marke Suchen',
+        tryLabel: 'TESTEN:',
+        clearBtn: 'LÖSCHEN',
+        spaceBtn: 'LEER',
+        decodeAiBtn: 'MIT KI DEKODIEREN',
+        backScannerBtn: 'Zurück zum Scanner',
+        techReportBadge: 'TECHNIKBERICHT • INTERAKTIV',
+        feedTitle: 'Fehler-Feed',
+        feedSwipeHint: 'Hoch/runter wischen ↕',
+        chatAnyTopicSubtitle: 'Beantwortet alles • Kennt Namen & Alter',
+        newChatBtn: 'Neuer Chat',
+        fixesTitle: 'Technische Korrekturen & Bugs',
+        fixesSubtitle: 'Bugs melden oder Anpassungen erfassen',
+        newTicketTitle: '+ Bug oder Korrektur Erfassen',
+        moduleLabel: 'Kategorie / Bereich',
+        priorityLabel: 'Priorität',
+        bugTitleLabel: 'Titel des Bugs oder der Korrektur',
+        bugDescLabel: 'Detaillierte Beschreibung',
+        registerFixBtn: 'Korrektur Speichern',
+        loggedTicketsLabel: 'Erfasste Tickets',
+        filterAll: 'Alle',
+        filterOpen: 'Offen',
+        filterReview: 'In Prüfung',
+        filterFixed: 'Behoben',
+        changelogTitle: 'Versionsverlauf',
+        settingsTitle: 'Systemeinstellungen',
+        settingsSubtitle: 'Sprache, Profil, Design, Telemetrie, KI & Daten',
+        secLanguageTitle: 'Sprache & Übersetzung (10 Sprachen)',
+        secLanguageDesc: 'Übersetzt Menüs, Hinweise, KI-Chips und Sprachausgabe.',
+        secProfileTitle: 'Profil & Identität',
+        saveProfileBtn: 'Name & Alter Speichern',
+        reopenOnboardingBtn: 'Startbildschirm',
+        secAppearanceTitle: 'Darstellung & Erlebnis',
+        accentThemeLabel: 'Akzentfarbe',
+        highContrastLabel: 'Hoher OLED-Kontrast',
+        highContrastDesc: 'Tiefschwarz und klare Kanten',
+        compactUiLabel: 'Kompakte Ansicht',
+        compactUiDesc: 'Mehr Platz auf dem Scanner',
+        secTelemetryTitle: 'Diagnose & Telemetrie',
+        pressureUnitLabel: 'Druckeinheit',
+        tempUnitLabel: 'Temperatureinheit',
+        autoSpeakLabel: 'Auto-Sprachausgabe',
+        autoSpeakDesc: 'KI-Antworten in gewählter Sprache vorlesen',
+        secAiDataTitle: 'KI-Assistent & Daten',
+        aiStyleLabel: 'KI-Antwortstil',
+        clearChatBtn: 'Chat Leeren',
+        resetDemoBtn: 'Demo Reset',
+        factoryResetBtn: 'Werkseinstellung',
+        selectBrandTitle: 'Marke Wählen',
+        savedCodesTitle: 'Gespeicherte Codes',
+        savedCodesSubtitle: 'Lokal gespeicherte Diagnosen',
+        navScanner: 'Scanner',
+        navFeed: 'Feed',
+        navChat: 'KI-Chat',
+        navFixes: 'Fix-Log',
+        navSettings: 'Einstellungen',
+        codePlaceholder: 'FEHLERCODE EINGEBEN...',
+        chatPlaceholder: 'Frag alles oder zu deinem Profil...'
+      },
+      it: {
+        quickAccessBadge: 'ACCESSO RAPIDO',
+        terminalTag: 'Ingegneria & Telemetria',
+        onboardTitle: 'Identificazione Operatore',
+        onboardSubtitle: 'Inserisci solo Nome ed Età per sbloccare Scanner, Feed Guasti, Chat IA, Correzioni e Impostazioni.',
+        yourNameLabel: 'Il Tuo Nome',
+        yourAgeLabel: 'La Tua Età',
+        enterAppBtn: 'Entra nell’App',
+        busLabel: 'BUS',
+        step1Vehicle: '1. Veicolo / Macchina',
+        step2Brand: '2. Marca',
+        searchBrandBtn: 'Cerca Marca',
+        tryLabel: 'PROVA:',
+        clearBtn: 'PULISCI',
+        spaceBtn: 'SPAZIO',
+        decodeAiBtn: 'DECODIFICA CON IA',
+        backScannerBtn: 'Torna allo Scanner',
+        techReportBadge: 'SCHEDA TECNICA • INTERATTIVA',
+        feedTitle: 'Feed Guasti',
+        feedSwipeHint: 'Scorri su/giù ↕',
+        chatAnyTopicSubtitle: 'Risponde a tutto • Conosce nome ed età',
+        newChatBtn: 'Nuova Chat',
+        fixesTitle: 'Correzioni Tecniche & Bug',
+        fixesSubtitle: 'Segnala bug o richiedi aggiustamenti tecnici',
+        newTicketTitle: '+ Registra Bug o Correzione',
+        moduleLabel: 'Categoria / Area',
+        priorityLabel: 'Priorità',
+        bugTitleLabel: 'Titolo Bug o Correzione',
+        bugDescLabel: 'Descrizione Dettagliata',
+        registerFixBtn: 'Registra Correzione',
+        loggedTicketsLabel: 'Ticket Registrati',
+        filterAll: 'Tutti',
+        filterOpen: 'Aperti',
+        filterReview: 'In Analisi',
+        filterFixed: 'Risolti',
+        changelogTitle: 'Registro Aggiornamenti',
+        settingsTitle: 'Impostazioni di Sistema',
+        settingsSubtitle: 'Lingua, Profilo, Aspetto, Telemetria, IA e Dati',
+        secLanguageTitle: 'Lingua e Traduzione (10 Lingue)',
+        secLanguageDesc: 'Traduce menu, etichette, suggerimenti IA e lettura vocale.',
+        secProfileTitle: 'Profilo e Identità',
+        saveProfileBtn: 'Salva Nome ed Età',
+        reopenOnboardingBtn: 'Schermata Iniziale',
+        secAppearanceTitle: 'Aspetto ed Esperienza',
+        accentThemeLabel: 'Colore Principale',
+        highContrastLabel: 'Alto Contrasto OLED',
+        highContrastDesc: 'Nero assoluto e bordi marcati',
+        compactUiLabel: 'Densità Compatta',
+        compactUiDesc: 'Più spazio sullo Scanner',
+        secTelemetryTitle: 'Diagnostica e Telemetria',
+        pressureUnitLabel: 'Unità Pressione',
+        tempUnitLabel: 'Unità Temperatura',
+        autoSpeakLabel: 'Lettura Vocale Auto',
+        autoSpeakDesc: 'Leggi risposte IA nella lingua scelta',
+        secAiDataTitle: 'Assistente IA e Dati',
+        aiStyleLabel: 'Stile Risposta IA',
+        clearChatBtn: 'Svuota Chat',
+        resetDemoBtn: 'Reset Demo',
+        factoryResetBtn: 'Ripristino Tutto',
+        selectBrandTitle: 'Seleziona Marca',
+        savedCodesTitle: 'Codici Salvati',
+        savedCodesSubtitle: 'Diagnostiche salvate sul dispositivo',
+        navScanner: 'Scanner',
+        navFeed: 'Feed',
+        navChat: 'Chat IA',
+        navFixes: 'Correzioni',
+        navSettings: 'Impostazioni',
+        codePlaceholder: 'INSERISCI CODICE GUASTO...',
+        chatPlaceholder: 'Chiedi qualsiasi cosa o sul tuo profilo...'
+      },
+      ja: {
+        quickAccessBadge: 'クイックアクセス',
+        terminalTag: 'エンジニアリング & テレメトリ',
+        onboardTitle: 'オペレーター登録',
+        onboardSubtitle: '名前と年齢を入力するだけで、スキャナー・故障フィード・AIチャット・修正ログ・設定が使えます。',
+        yourNameLabel: 'お名前',
+        yourAgeLabel: '年齢',
+        enterAppBtn: 'アプリを開く',
+        busLabel: 'バス',
+        step1Vehicle: '1. 車両・機械',
+        step2Brand: '2. メーカー',
+        searchBrandBtn: 'メーカー検索',
+        tryLabel: '試す:',
+        clearBtn: 'クリア',
+        spaceBtn: '空白',
+        decodeAiBtn: 'AIで解析する',
+        backScannerBtn: 'スキャナーへ戻る',
+        techReportBadge: '技術レポート • インタラクティブ',
+        feedTitle: '故障フィード',
+        feedSwipeHint: '上下にスワイプ ↕',
+        chatAnyTopicSubtitle: 'あらゆる質問に対応 • 名前と年齢を記憶',
+        newChatBtn: '新規チャット',
+        fixesTitle: '技術修正・バグ管理',
+        fixesSubtitle: 'バグ報告やコード・機械データの修正を記録',
+        newTicketTitle: '+ バグ・修正を登録',
+        moduleLabel: 'カテゴリ',
+        priorityLabel: '優先度',
+        bugTitleLabel: 'バグ・修正タイトル',
+        bugDescLabel: '詳細説明',
+        registerFixBtn: '技術修正を登録',
+        loggedTicketsLabel: '登録済みチケット',
+        filterAll: 'すべて',
+        filterOpen: '未対応',
+        filterReview: '調査中',
+        filterFixed: '完了',
+        changelogTitle: '更新履歴',
+        settingsTitle: 'システム設定',
+        settingsSubtitle: '言語・プロフィール・表示・テレメトリ・AI・データ',
+        secLanguageTitle: '言語と翻訳（10言語）',
+        secLanguageDesc: 'メニュー、ラベル、AI提案、音声読み上げを翻訳します。',
+        secProfileTitle: 'プロフィール設定',
+        saveProfileBtn: '名前と年齢を保存',
+        reopenOnboardingBtn: '初期画面を表示',
+        secAppearanceTitle: '表示と操作感',
+        accentThemeLabel: 'アクセントカラー',
+        highContrastLabel: '高コントラストOLED',
+        highContrastDesc: '純黒背景と明確な境界線',
+        compactUiLabel: 'コンパクト表示',
+        compactUiDesc: 'スキャナー画面のスペースを拡張',
+        secTelemetryTitle: '診断とテレメトリ',
+        pressureUnitLabel: '圧力単位',
+        tempUnitLabel: '温度単位',
+        autoSpeakLabel: '音声自動読み上げ',
+        autoSpeakDesc: '選択した言語でAI応答を読み上げ',
+        secAiDataTitle: 'AIアシスタントとデータ',
+        aiStyleLabel: 'AI応答スタイル',
+        clearChatBtn: 'チャット消去',
+        resetDemoBtn: 'デモ初期化',
+        factoryResetBtn: '全リセット',
+        selectBrandTitle: 'メーカー選択',
+        savedCodesTitle: '保存済みコード',
+        savedCodesSubtitle: '端末に保存された診断データ',
+        navScanner: 'スキャナー',
+        navFeed: 'フィード',
+        navChat: 'AIチャット',
+        navFixes: '修正ログ',
+        navSettings: '設定',
+        codePlaceholder: '故障コードを入力...',
+        chatPlaceholder: '何でも質問するか、プロフィールについて聞いてください...'
+      },
+      ko: {
+        quickAccessBadge: '빠른 접속',
+        terminalTag: '엔지니어링 & 텔레메트리',
+        onboardTitle: '사용자 정보 입력',
+        onboardSubtitle: '이름과 나이만 입력하면 스캐너, 고장 피드, AI 채팅, 수정 기록, 설정을 바로 사용할 수 있습니다.',
+        yourNameLabel: '이름',
+        yourAgeLabel: '나이',
+        enterAppBtn: '앱 시작하기',
+        busLabel: '버스',
+        step1Vehicle: '1. 차량 / 장비',
+        step2Brand: '2. 제조사',
+        searchBrandBtn: '제조사 검색',
+        tryLabel: '테스트:',
+        clearBtn: '지우기',
+        spaceBtn: '공백',
+        decodeAiBtn: 'AI로 코드 분석',
+        backScannerBtn: '스캐너로 돌아가기',
+        techReportBadge: '기술 리포트 • 인터랙티브',
+        feedTitle: '고장 피드',
+        feedSwipeHint: '위/아래로 스와이프 ↕',
+        chatAnyTopicSubtitle: '모든 주제 답변 • 이름과 나이 기억',
+        newChatBtn: '새 대화',
+        fixesTitle: '기술 수정 및 버그',
+        fixesSubtitle: '버그 제보 또는 코드·장비 수정 요청 기록',
+        newTicketTitle: '+ 버그 또는 수정 등록',
+        moduleLabel: '카테고리 / 영역',
+        priorityLabel: '우선순위',
+        bugTitleLabel: '버그 또는 수정 제목',
+        bugDescLabel: '상세 설명',
+        registerFixBtn: '기술 수정 등록',
+        loggedTicketsLabel: '등록된 티켓',
+        filterAll: '전체',
+        filterOpen: '진행중',
+        filterReview: '검토중',
+        filterFixed: '완료',
+        changelogTitle: '업데이트 로그',
+        settingsTitle: '시스템 설정',
+        settingsSubtitle: '언어, 프로필, 화면, 텔레메트리, AI 및 데이터',
+        secLanguageTitle: '언어 및 번역 (10개 언어)',
+        secLanguageDesc: '메뉴, 라벨, AI 추천 질문 및 음성 읽기를 번역합니다.',
+        secProfileTitle: '프로필 및 정보',
+        saveProfileBtn: '이름 및 나이 저장',
+        reopenOnboardingBtn: '초기 화면 보기',
+        secAppearanceTitle: '화면 및 환경설정',
+        accentThemeLabel: '강조 색상',
+        highContrastLabel: 'OLED 고대비',
+        highContrastDesc: '순수 블랙과 선명한 테두리',
+        compactUiLabel: '컴팩트 밀도',
+        compactUiDesc: '스캐너 화면 공간 확보',
+        secTelemetryTitle: '진단 및 텔레메트리',
+        pressureUnitLabel: '압력 단위',
+        tempUnitLabel: '온도 단위',
+        autoSpeakLabel: '음성 자동 읽기',
+        autoSpeakDesc: '선택한 언어로 AI 답변 읽어주기',
+        secAiDataTitle: 'AI 어시스턴트 및 데이터',
+        aiStyleLabel: 'AI 답변 스타일',
+        clearChatBtn: '채팅 지우기',
+        resetDemoBtn: '데모 초기화',
+        factoryResetBtn: '전체 초기화',
+        selectBrandTitle: '제조사 선택',
+        savedCodesTitle: '저장된 코드',
+        savedCodesSubtitle: '기기에 저장된 진단 기록',
+        navScanner: '스캐너',
+        navFeed: '피드',
+        navChat: 'AI 채팅',
+        navFixes: '수정',
+        navSettings: '설정',
+        codePlaceholder: '고장 코드 입력...',
+        chatPlaceholder: '무엇이든 물어보거나 내 정보를 물어보세요...'
+      },
+      ru: {
+        quickAccessBadge: 'БЫСТРЫЙ ВХОД',
+        terminalTag: 'Инженерия и Телеметрия',
+        onboardTitle: 'Профиль Оператора',
+        onboardSubtitle: 'Укажите только Имя и Возраст, чтобы открыть Сканер, Ленту ошибок, ИИ-чат, Исправления и Настройки.',
+        yourNameLabel: 'Ваше Имя',
+        yourAgeLabel: 'Ваш Возраст',
+        enterAppBtn: 'Войти в Приложение',
+        busLabel: 'ШИНА',
+        step1Vehicle: '1. Техника / Авто',
+        step2Brand: '2. Марка',
+        searchBrandBtn: 'Поиск Марки',
+        tryLabel: 'ТЕСТ:',
+        clearBtn: 'ОЧИСТИТЬ',
+        spaceBtn: 'ПРОБЕЛ',
+        decodeAiBtn: 'ДЕКОДИРОВАТЬ С ИИ',
+        backScannerBtn: 'Назад к Сканеру',
+        techReportBadge: 'ОТЧЁТ • ИНТЕРАКТИВНЫЙ',
+        feedTitle: 'Лента Ошибок',
+        feedSwipeHint: 'Листайте вверх/вниз ↕',
+        chatAnyTopicSubtitle: 'Отвечает на любые темы • Знает имя и возраст',
+        newChatBtn: 'Новый Чат',
+        fixesTitle: 'Технические Правки и Баги',
+        fixesSubtitle: 'Фиксируйте баги и запросы на доработку',
+        newTicketTitle: '+ Добавить Баг или Правку',
+        moduleLabel: 'Категория / Раздел',
+        priorityLabel: 'Приоритет',
+        bugTitleLabel: 'Заголовок Бага или Правки',
+        bugDescLabel: 'Подробное Описание',
+        registerFixBtn: 'Сохранить Правку',
+        loggedTicketsLabel: 'Заявки',
+        filterAll: 'Все',
+        filterOpen: 'Открытые',
+        filterReview: 'На проверке',
+        filterFixed: 'Исправлено',
+        changelogTitle: 'Журнал Обновлений',
+        settingsTitle: 'Настройки Системы',
+        settingsSubtitle: 'Язык, Профиль, Вид, Телеметрия, ИИ и Данные',
+        secLanguageTitle: 'Язык и Перевод (10 Языков)',
+        secLanguageDesc: 'Переводит меню, подсказки ИИ и озвучку.',
+        secProfileTitle: 'Профиль и Данные',
+        saveProfileBtn: 'Сохранить Имя и Возраст',
+        reopenOnboardingBtn: 'Экран Приветствия',
+        secAppearanceTitle: 'Оформление и Интерфейс',
+        accentThemeLabel: 'Цвет Акцента',
+        highContrastLabel: 'Высокий Контраст OLED',
+        highContrastDesc: 'Глубокий чёрный и чёткие рамки',
+        compactUiLabel: 'Компактный Режим',
+        compactUiDesc: 'Больше места на экране Сканера',
+        secTelemetryTitle: 'Диагностика и Телеметрия',
+        pressureUnitLabel: 'Единица Давления',
+        tempUnitLabel: 'Единица Температуры',
+        autoSpeakLabel: 'Автоозвучка Ответов',
+        autoSpeakDesc: 'Озвучивать ответы ИИ на выбранном языке',
+        secAiDataTitle: 'ИИ-Ассистент и Данные',
+        aiStyleLabel: 'Стиль Ответов ИИ',
+        clearChatBtn: 'Очистить Чат',
+        resetDemoBtn: 'Сброс Демо',
+        factoryResetBtn: 'Полный Сброс',
+        selectBrandTitle: 'Выбор Марки',
+        savedCodesTitle: 'Сохранённые Коды',
+        savedCodesSubtitle: 'Сохранённые диагностики',
+        navScanner: 'Сканер',
+        navFeed: 'Лента',
+        navChat: 'ИИ-Чат',
+        navFixes: 'Правки',
+        navSettings: 'Настройки',
+        codePlaceholder: 'ВВЕДИТЕ КОД ОШИБКИ...',
+        chatPlaceholder: 'Спросите о чём угодно или о своём профиле...'
+      },
+      ar: {
+        quickAccessBadge: 'دخول سريع',
+        terminalTag: 'الهندسة والقياس عن بُعد',
+        onboardTitle: 'تعريف المشغّل',
+        onboardSubtitle: 'أدخل الاسم والعمر فقط لفتح الماسح، موجز الأعطال، دردشة الذكاء الاصطناعي، الإصلاحات والإعدادات.',
+        yourNameLabel: 'اسمك',
+        yourAgeLabel: 'عمرك',
+        enterAppBtn: 'دخول التطبيق',
+        busLabel: 'الناقل',
+        step1Vehicle: '1. المركبة / المعدة',
+        step2Brand: '2. الشركة المصنّعة',
+        searchBrandBtn: 'بحث عن ماركة',
+        tryLabel: 'جرّب:',
+        clearBtn: 'مسح',
+        spaceBtn: 'مسافة',
+        decodeAiBtn: 'تحليل بالذكاء الاصطناعي',
+        backScannerBtn: 'العودة للماسح',
+        techReportBadge: 'تقرير فني • تفاعلي',
+        feedTitle: 'موجز الأعطال',
+        feedSwipeHint: 'اسحب لأعلى/لأسفل ↕',
+        chatAnyTopicSubtitle: 'يجيب عن أي موضوع • يعرف اسمك وعمرك',
+        newChatBtn: 'محادثة جديدة',
+        fixesTitle: 'الإصلاحات الفنية والأخطاء',
+        fixesSubtitle: 'سجّل الأخطاء أو طلبات التحسين الفني',
+        newTicketTitle: '+ تسجيل خطأ أو إصلاح',
+        moduleLabel: 'الفئة / القسم',
+        priorityLabel: 'الأولوية',
+        bugTitleLabel: 'عنوان الخطأ أو التعديل',
+        bugDescLabel: 'وصف تفصيلي',
+        registerFixBtn: 'تسجيل الإصلاح الفني',
+        loggedTicketsLabel: 'البلاغات المسجلة',
+        filterAll: 'الكل',
+        filterOpen: 'مفتوح',
+        filterReview: 'قيد الفحص',
+        filterFixed: 'تم الإصلاح',
+        changelogTitle: 'سجل التحديثات',
+        settingsTitle: 'إعدادات النظام',
+        settingsSubtitle: 'اللغة، الملف الشخصي، المظهر، القياس، الذكاء والبيانات',
+        secLanguageTitle: 'اللغة والترجمة (10 لغات)',
+        secLanguageDesc: 'ترجمة القوائم واقتراحات الذكاء الاصطناعي والنطق الصوتي.',
+        secProfileTitle: 'الملف الشخصي والهوية',
+        saveProfileBtn: 'حفظ الاسم والعمر',
+        reopenOnboardingBtn: 'شاشة البداية',
+        secAppearanceTitle: 'المظهر والتجربة',
+        accentThemeLabel: 'لون التمييز',
+        highContrastLabel: 'تباين OLED عالٍ',
+        highContrastDesc: 'أسود داكن وحواف أوضح',
+        compactUiLabel: 'كثافة مدمجة',
+        compactUiDesc: 'مساحة أوسع في شاشة الماسح',
+        secTelemetryTitle: 'التشخيص والقياس',
+        pressureUnitLabel: 'وحدة الضغط',
+        tempUnitLabel: 'وحدة الحرارة',
+        autoSpeakLabel: 'قراءة صوتية تلقائية',
+        autoSpeakDesc: 'نطق ردود الذكاء الاصطناعي باللغة المختارة',
+        secAiDataTitle: 'مساعد الذكاء والبيانات',
+        aiStyleLabel: 'أسلوب رد الذكاء الاصطناعي',
+        clearChatBtn: 'مسح الدردشة',
+        resetDemoBtn: 'إعادة التجريبي',
+        factoryResetBtn: 'ضبط المصنع',
+        selectBrandTitle: 'اختر الشركة',
+        savedCodesTitle: 'الأكواد المحفوظة',
+        savedCodesSubtitle: 'التشخيصات المحفوظة على الجهاز',
+        navScanner: 'الماسح',
+        navFeed: 'الموجز',
+        navChat: 'دردشة AI',
+        navFixes: 'الإصلاحات',
+        navSettings: 'الإعدادات',
+        codePlaceholder: 'أدخل رمز العطل...',
+        chatPlaceholder: 'اسأل عن أي شيء أو عن ملفك الشخصي...'
+      }
+    };
+
+    function t(key) {
+      const lang = state.settings?.language || 'pt';
+      return UI_TRANSLATIONS[lang]?.[key] || UI_TRANSLATIONS.pt[key] || key;
+    }
+
+    // =========================================================================
+    // 2. CATÁLOGO DE 8 CATEGORIAS E MONTADORAS REAIS
+    // =========================================================================
+    const VEHICLE_CATALOG = {
+      'Carro': {
+        icon: '🚗',
+        voltage: '12V',
+        protocol: 'OBD-II / CAN 500kbps',
+        samples: ['P0300', 'P0171', 'P0420', 'U0100'],
+        brands: ['Volkswagen', 'Fiat', 'Chevrolet', 'Ford', 'Toyota', 'Hyundai', 'Honda', 'Renault', 'Jeep', 'Nissan', 'Peugeot', 'Citroën', 'BMW', 'Audi']
+      },
+      'Picape / 4x4': {
+        icon: '🛻',
+        voltage: '12V',
+        protocol: 'OBD-II / UDS CAN',
+        samples: ['P0087', 'P0299', 'P2002', '16705'],
+        brands: ['Toyota Hilux', 'Chevrolet S10', 'Ford Ranger', 'Volkswagen Amarok', 'Mitsubishi L200', 'Nissan Frontier', 'RAM 1500', 'RAM 2500']
+      },
+      'Caminhão': {
+        icon: '🚛',
+        voltage: '24V',
+        protocol: 'SAE J1939 / J1587',
+        samples: ['SPN 3226 FMI 18', 'SPN 110 FMI 0', 'P20EE', 'SPN 157 FMI 3'],
+        brands: ['Scania', 'Volvo Trucks', 'Mercedes-Benz', 'Volkswagen Caminhões', 'DAF', 'IVECO', 'MAN', 'Sinotruk']
+      },
+      'Trator Agrícola': {
+        icon: '🚜',
+        voltage: '24V',
+        protocol: 'ISOBUS / SAE J1939',
+        samples: ['ECU 000094.18', 'SPN 179 FMI 4', 'EEC 522398.09', 'SPN 96 FMI 3'],
+        brands: ['John Deere', 'Massey Ferguson', 'Valtra', 'New Holland', 'Case IH', 'Fendt', 'LS Tractor', 'Mahindra']
+      },
+      'Colheitadeira': {
+        icon: '🌾',
+        voltage: '24V',
+        protocol: 'SAE J1939 / CAN-FD',
+        samples: ['SPN 520241 FMI 5', 'ECU 000637.07', 'SPN 190 FMI 2'],
+        brands: ['John Deere', 'Case IH', 'New Holland', 'Massey Ferguson', 'Valtra', 'Claas']
+      },
+      'Linha Amarela': {
+        icon: '🏗️',
+        voltage: '24V',
+        protocol: 'SAE J1939 / Proprietário',
+        samples: ['CID 0247 FMI 09', 'SPN 168 FMI 4', 'E204-2'],
+        brands: ['Caterpillar', 'Komatsu', 'Volvo CE', 'JCB', 'Hyundai CE', 'XCMG', 'Bobcat', 'New Holland Construction']
+      },
+      'Utilitário': {
+        icon: '🚐',
+        voltage: '12V / 24V',
+        protocol: 'OBD-II / J1939',
+        samples: ['P0401', 'P0234', 'U0121'],
+        brands: ['Mercedes-Benz Sprinter', 'Renault Master', 'Fiat Ducato', 'IVECO Daily', 'Peugeot Boxer', 'Ford Transit']
+      },
+      'Moto / UTV': {
+        icon: '🏍️',
+        voltage: '12V',
+        protocol: 'ISO 14230 / CAN',
+        samples: ['P0118', 'P0562', 'P0335'],
+        brands: ['Honda', 'Yamaha', 'BMW Motorrad', 'Kawasaki', 'Triumph', 'Can-Am', 'Polaris']
+      }
+    };
+
+    // =========================================================================
+    // 3. BASE TÉCNICA DE FALHAS E FEED ESTILO TIKTOK (VOLTS / OHMS / BAR)
+    // =========================================================================
+    const FAULT_DATABASE = [
+      {
+        code: 'P0300',
+        category: 'Carro',
+        brand: 'Volkswagen',
+        system: 'Ignição & Combustão',
+        severity: 'ALTA',
+        voltage: '12V',
+        title: 'Falhas de ignição aleatórias / múltiplos cilindros',
+        meaning: 'A ECU detectou irregularidade na velocidade angular do virabrequim indicando falhas de combustão em mais de um cilindro.',
+        causes: [
+          { label: 'Velas de irídio desgastadas ou bobinas individuais com fuga de centelha', prob: 45 },
+          { label: 'Pressão de combustível baixa ou bicos injetores com vazão desequilibrada', prob: 35 },
+          { label: 'Entrada de ar falso na admissão ou perda de compressão mecânica', prob: 20 }
+        ],
+        readings: {
+          volts: '12.6V (bat) • 5.0V ref bobina',
+          ohms: '0.5–1.2 Ω primário / 8–13 kΩ secundário',
+          pressure: '3.8–4.2 bar linha combustível'
+        },
+        checklist: [
+          'Medir tensão da bateria em repouso (12.4V–12.7V) e alternador em marcha lenta (13.8V–14.4V).',
+          'Inspecionar velas e testar resistência/centelha das bobinas de ignição.',
+          'Conferir pressão da bomba de combustível com manômetro em marcha lenta e aceleração.'
+        ]
+      },
+      {
+        code: 'P0087',
+        category: 'Picape / 4x4',
+        brand: 'Toyota Hilux',
+        system: 'Injeção Common Rail Diesel',
+        severity: 'CRÍTICA',
+        voltage: '12V',
+        title: 'Pressão no rail de combustível abaixo do especificado',
+        meaning: 'A pressão real no acumulador (rail) ficou significativamente inferior à pressão alvo calculada pela ECU.',
+        causes: [
+          { label: 'Válvula reguladora de pressão (SCV / DRV) travada ou com filtro obstruído', prob: 45 },
+          { label: 'Filtro de diesel saturado, ar na linha de sucção ou bomba de alta desgastada', prob: 35 },
+          { label: 'Injetor diesel retornando excesso de combustível para o retorno', prob: 20 }
+        ],
+        readings: {
+          volts: '5.0V alimentação / 0.5–4.5V sinal rail',
+          ohms: '2.0–4.5 Ω válvula SCV',
+          pressure: '280–350 bar marcha lenta / até 1600 bar carga'
+        },
+        checklist: [
+          'Substituir elemento filtrante de diesel e sangrar ar da linha de alimentação.',
+          'Comparar pressão alvo vs. pressão real do rail no scanner em marcha lenta e carga.',
+          'Medir retorno de combustível dos injetores com provetas graduadas.'
+        ]
+      },
+      {
+        code: 'SPN 3226 FMI 18',
+        category: 'Caminhão',
+        brand: 'Scania',
+        system: 'Pós-Tratamento / ARLA 32 (SCR)',
+        severity: 'ALTA',
+        voltage: '24V',
+        title: 'Concentração de ARLA 32 (DEF) abaixo do limite mínimo',
+        meaning: 'O sensor de qualidade/nível no tanque de ARLA 32 identificou concentração fora da faixa nominal (~32,5% ureia).',
+        causes: [
+          { label: 'ARLA 32 contaminado, diluído ou fora da especificação ISO 22241', prob: 50 },
+          { label: 'Sensor óptico/ultrassônico de qualidade no tanque sujo ou com falha', prob: 30 },
+          { label: 'Aquecedor ou bomba de dosagem com restrição hidráulica', prob: 20 }
+        ],
+        readings: {
+          volts: '24.0V linha / 12.0V sensor ARLA',
+          ohms: '1.5–4.0 Ω aquecedor do tanque',
+          pressure: '4.5–5.5 bar bomba de dosagem SCR'
+        },
+        checklist: [
+          'Medir concentração do ARLA 32 com refratômetro (alvo: 31,8% a 33,2%).',
+          'Inspecionar chicote de 24V, conectores e fusíveis do módulo SCR.',
+          'Verificar pressão de linha da bomba de ARLA durante o ciclo de teste ativo.'
+        ]
+      },
+      {
+        code: 'ECU 000094.18',
+        category: 'Trator Agrícola',
+        brand: 'John Deere',
+        system: 'Alimentação de Combustível Diesel',
+        severity: 'ALTA',
+        voltage: '24V',
+        title: 'Pressão de combustível baixa / moderadamente severa',
+        meaning: 'A unidade de controle do motor (ECU) detectou queda de pressão de transferência abaixo do limite operacional.',
+        causes: [
+          { label: 'Filtros primário e secundário de diesel saturados com impurezas ou água', prob: 50 },
+          { label: 'Bomba de transferência com desgaste interno ou válvula de alívio travada', prob: 30 },
+          { label: 'Restrição na mangueira de sucção ou respiro do tanque entupido', prob: 20 }
+        ],
+        readings: {
+          volts: '24.0V alimentação / 5.0V sensor pressão',
+          ohms: 'Continuidade < 1.0 Ω chicote sensor',
+          pressure: '3.5–5.5 bar baixa pressão (conforme rotação)'
+        },
+        checklist: [
+          'Drenar água e trocar filtros de combustível; verificar restrição de sucção.',
+          'Medir alimentação de 5.0V e massa do sensor de pressão de combustível.',
+          'Testar pressão da bomba de transferência em carga nominal no campo/bancada.'
+        ]
+      },
+      {
+        code: 'SPN 179 FMI 4',
+        category: 'Trator Agrícola',
+        brand: 'Valtra',
+        system: 'Admissão / Ar do Motor',
+        severity: 'MÉDIA',
+        voltage: '24V',
+        title: 'Pressão do coletor de admissão (MAP) em curto com massa',
+        meaning: 'Sinal de tensão do sensor de pressão/temperatura do ar de admissão abaixo do limiar mínimo permitido.',
+        causes: [
+          { label: 'Curto-circuito do fio de sinal para o terra ou chicote roçado na carcaça', prob: 45 },
+          { label: 'Sensor MAP/IAT com falha interna no elemento piezoelétrico', prob: 35 },
+          { label: 'Conector oxidado ou pino recuado no chicote do motor', prob: 20 }
+        ],
+        readings: {
+          volts: '5.0V ref / < 0.2V indica curto à massa',
+          ohms: '2.0–3.0 kΩ sensor NTC temp a 25°C',
+          pressure: '1.0 bar atmosférico / 1.8–2.4 bar turbo'
+        },
+        checklist: [
+          'Desconectar sensor MAP e medir tensão no pino de sinal (não deve estar aterrado).',
+          'Testar continuidade dos fios até a ECU e inspecionar travas do conector.',
+          'Comparar leitura de pressão barométrica com motor desligado.'
+        ]
+      },
+      {
+        code: 'CID 0247 FMI 09',
+        category: 'Linha Amarela',
+        brand: 'Caterpillar',
+        system: 'Rede de Comunicação SAE J1939',
+        severity: 'ALTA',
+        voltage: '24V',
+        title: 'Taxa de atualização anormal no barramento CAN J1939',
+        meaning: 'O módulo perdeu mensagens periódicas esperadas de outro controlador na rede CAN de 24V.',
+        causes: [
+          { label: 'Mau contato em conector intermediário ou chicote danificado por vibração', prob: 45 },
+          { label: 'Resistores terminadores de 120 Ω fora do padrão ou circuito aberto', prob: 30 },
+          { label: 'Módulo conectado na rede com alimentação de 24V intermitente', prob: 25 }
+        ],
+        readings: {
+          volts: 'CAN_H ~2.7V • CAN_L ~2.3V (diferencial ~2V)',
+          ohms: '~60 Ω entre CAN_H e CAN_L (bateria desligada)',
+          pressure: 'N/A (Rede Digital CAN)'
+        },
+        checklist: [
+          'Com bateria desligada, medir resistência entre CAN_H e CAN_L (~60 Ω).',
+          'Verificar alimentação de 24V e aterramento de cada ECU na rede.',
+          'Inspecionar conectores Deutsch contra umidade e oxidação.'
+        ]
+      }
+    ];
+
+    const DEFAULT_FIX_TICKETS = [
+      {
+        id: 'TCK-101',
+        module: 'Scanner / Protocolo',
+        priority: 'Alta',
+        status: 'Corrigido',
+        title: 'Detecção automática de barramento 12V e 24V por categoria',
+        desc: 'Tratores, caminhões e linha amarela passam a exibir 24V / SAE J1939 automaticamente.',
+        author: 'Sistema',
+        date: 'Hoje'
+      },
+      {
+        id: 'TCK-102',
+        module: 'Tradução',
+        priority: 'Normal',
+        status: 'Em Análise',
+        title: 'Refinar traduções técnicas de bancada em 10 idiomas',
+        desc: 'Garantir clareza nos termos de Volts, Ohms e Bar nas configurações de idioma.',
+        author: 'Engenharia',
+        date: 'Hoje'
+      }
+    ];
+
+    // =========================================================================
+    // 4. ESTADO GLOBAL E PERSISTÊNCIA
+    // =========================================================================
+    const DEFAULT_SETTINGS = {
+      language: 'pt',
+      accent: 'cyan',
+      highContrast: false,
+      compactUi: false,
+      pressureUnit: 'bar',
+      tempUnit: 'C',
+      autoSpeak: false,
+      aiStyle: 'concise'
+    };
+
+    let state = {
+      savedUser: JSON.parse(localStorage.getItem('diagcore_quick_user_v1') || 'null'),
+      activeUser: null,
+      settings: { ...DEFAULT_SETTINGS, ...(JSON.parse(localStorage.getItem('diagcore_settings_v1') || '{}')) },
+      activeTab: 'scanner',
+      selectedCategory: null,
+      selectedBrand: null,
+      feedFilterCategory: 'ALL',
+      chatMode: 'general',
+      savedCodes: JSON.parse(localStorage.getItem('diagcore_saved_v6') || '[]'),
+      checkedTests: JSON.parse(localStorage.getItem('diagcore_checked_v6') || '{}'),
+      fixTickets: JSON.parse(localStorage.getItem('diagcore_fixes_v1') || JSON.stringify(DEFAULT_FIX_TICKETS)),
+      selectedFixPriority: 'Normal',
+      fixStatusFilter: 'ALL',
+      chatHistory: []
+    };
+
+    function persistSettings() {
+      localStorage.setItem('diagcore_settings_v1', JSON.stringify(state.settings));
+    }
+
+    // =========================================================================
+    // 5. INICIALIZAÇÃO & ACESSO RÁPIDO (NOME E IDADE)
+    // =========================================================================
+    window.onload = function () {
+      lucide.createIcons();
+      applyLanguageAndSettings();
+      setupInitialAccess();
+      renderCategories();
+      renderBrands();
+      updateContextDisplays();
+      updateSavedBadge();
+      renderFeed();
+      renderFixTickets();
+      renderLanguageGrid();
+      syncSettingsFormUI();
+    };
+
+    function applyLanguageAndSettings() {
+      const langMeta = SUPPORTED_LANGUAGES.find(l => l.code === state.settings.language) || SUPPORTED_LANGUAGES[0];
+      document.documentElement.lang = langMeta.code;
+      document.getElementById('app-shell').dir = langMeta.dir;
+
+      document.getElementById('header-lang-pill').textContent = langMeta.badge;
+      document.getElementById('settings-active-lang-badge').textContent = langMeta.badge;
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+
+      document.getElementById('code-display-input').placeholder = t('codePlaceholder');
+      document.getElementById('chat-text-input').placeholder = t('chatPlaceholder');
+
+      document.body.classList.toggle('high-contrast', !!state.settings.highContrast);
+      document.body.classList.toggle('compact-ui', !!state.settings.compactUi);
+    }
+
+    function renderLanguageGrid() {
+      const grid = document.getElementById('language-selector-grid');
+      if (!grid) return;
+      grid.innerHTML = SUPPORTED_LANGUAGES.map(lang => {
+        const active = state.settings.language === lang.code;
+        return `
+          <button onclick="selectAppLanguage('${lang.code}')" class="p-2.5 rounded-2xl text-left transition active:scale-95 flex items-center justify-between border ${
+            active
+              ? 'bg-neonCyan text-black border-neonCyan font-black shadow-[0_0_15px_rgba(0,240,255,0.25)]'
+              : 'bg-surfaceLight text-slate-200 border-white/10 font-semibold'
+          }">
+            <span class="text-xs truncate">${lang.native}</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded ${active ? 'bg-black/20 text-black' : 'bg-black/40 text-neonCyan'}">${lang.badge}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectAppLanguage(langCode) {
+      state.settings.language = langCode;
+      persistSettings();
+      applyLanguageAndSettings();
+      renderLanguageGrid();
+      renderFeed();
+      renderFixTickets();
+      updateChatChips();
+      initChatWelcome();
+      const langMeta = SUPPORTED_LANGUAGES.find(l => l.code === langCode);
+      showNativeToast(`${langMeta?.native || langCode.toUpperCase()}`);
+    }
+
+    function syncSettingsFormUI() {
+      const user = state.activeUser || state.savedUser || { name: 'Operador', age: 27 };
+      document.getElementById('cfg-edit-name').value = user.name || '';
+      document.getElementById('cfg-edit-age').value = user.age || '';
+      document.getElementById('settings-profile-summary').textContent = `${user.name} • ${user.age} anos`;
+
+      document.getElementById('cfg-pressure-unit').value = state.settings.pressureUnit;
+      document.getElementById('cfg-temp-unit').value = state.settings.tempUnit;
+      document.getElementById('cfg-ai-style').value = state.settings.aiStyle;
+
+      ['highContrast', 'compactUi', 'autoSpeak'].forEach(key => {
+        const btn = document.getElementById(`toggle-${key}`);
+        if (!btn) return;
+        const knob = btn.firstElementChild;
+        const on = !!state.settings[key];
+        btn.classList.toggle('bg-neonCyan', on);
+        btn.classList.toggle('bg-surfaceLight', !on);
+        knob.classList.toggle('translate-x-5', on);
+        knob.classList.toggle('bg-black', on);
+        knob.classList.toggle('bg-slate-400', !on);
+      });
+
+      document.querySelectorAll('.accent-btn').forEach(btn => {
+        const active = btn.dataset.accent === state.settings.accent;
+        btn.classList.toggle('border-white', active);
+        btn.classList.toggle('scale-[1.03]', active);
+      });
+    }
+
+    function saveSettingsProfile() {
+      const name = document.getElementById('cfg-edit-name').value.trim();
+      const age = parseInt(document.getElementById('cfg-edit-age').value, 10);
+      const errEl = document.getElementById('cfg-profile-error');
+
+      if (!name || name.length < 2) {
+        errEl.textContent = 'Informe um nome válido (mín. 2 caracteres).';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      if (!age || isNaN(age) || age < 12 || age > 110) {
+        errEl.textContent = 'Informe uma idade válida (entre 12 e 110 anos).';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      errEl.classList.add('hidden');
+      const updated = { name, age };
+      state.activeUser = updated;
+      state.savedUser = updated;
+      localStorage.setItem('diagcore_quick_user_v1', JSON.stringify(updated));
+      syncUserProfileUI();
+      syncSettingsFormUI();
+      initChatWelcome();
+      showNativeToast(`✓ ${name} (${age}a)`);
+    }
+
+    function setAccentTheme(accent) {
+      state.settings.accent = accent;
+      persistSettings();
+      syncSettingsFormUI();
+      showNativeToast(accent.toUpperCase());
+    }
+
+    function toggleSettingBool(key) {
+      state.settings[key] = !state.settings[key];
+      persistSettings();
+      applyLanguageAndSettings();
+      syncSettingsFormUI();
+    }
+
+    function updateTelemetryPref(key, value) {
+      state.settings[key] = value;
+      persistSettings();
+      renderFeed();
+      if (key === 'aiStyle') initChatWelcome();
+      showNativeToast(`${value}`);
+    }
+
+    function resetDemoData() {
+      state.savedCodes = [];
+      state.checkedTests = {};
+      state.fixTickets = [...DEFAULT_FIX_TICKETS];
+      localStorage.removeItem('diagcore_saved_v6');
+      localStorage.removeItem('diagcore_checked_v6');
+      localStorage.setItem('diagcore_fixes_v1', JSON.stringify(state.fixTickets));
+      updateSavedBadge();
+      renderFeed();
+      renderFixTickets();
+      initChatWelcome();
+      showNativeToast('Dados demo restaurados');
+    }
+
+    function factoryResetAll() {
+      localStorage.removeItem('diagcore_quick_user_v1');
+      localStorage.removeItem('diagcore_settings_v1');
+      localStorage.removeItem('diagcore_saved_v6');
+      localStorage.removeItem('diagcore_checked_v6');
+      localStorage.removeItem('diagcore_fixes_v1');
+      state.settings = { ...DEFAULT_SETTINGS };
+      state.savedUser = null;
+      state.activeUser = null;
+      state.savedCodes = [];
+      state.checkedTests = {};
+      state.fixTickets = [...DEFAULT_FIX_TICKETS];
+      applyLanguageAndSettings();
+      updateSavedBadge();
+      returnToOnboardingScreen();
+    }
+
+    function setupInitialAccess() {
+      if (state.savedUser && state.savedUser.name && state.savedUser.age) {
+        state.activeUser = state.savedUser;
+        document.getElementById('onboarding-screen').classList.add('hidden');
+        syncUserProfileUI();
+        initChatWelcome();
+      } else {
+        openOnboardingScreen();
+      }
+    }
+
+    function openOnboardingScreen() {
+      const screen = document.getElementById('onboarding-screen');
+      screen.classList.remove('hidden');
+      document.getElementById('onboard-error').classList.add('hidden');
+
+      const shortcutBtn = document.getElementById('saved-profile-shortcut');
+      if (state.savedUser && state.savedUser.name) {
+        shortcutBtn.classList.remove('hidden');
+        document.getElementById('saved-profile-shortcut-label').textContent =
+          `Continuar como ${state.savedUser.name} (${state.savedUser.age}a)`;
+      } else {
+        shortcutBtn.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    function loadExistingProfile() {
+      if (!state.savedUser) return;
+      state.activeUser = state.savedUser;
+      document.getElementById('onboarding-screen').classList.add('hidden');
+      syncUserProfileUI();
+      syncSettingsFormUI();
+      initChatWelcome();
+      showNativeToast(`Bem-vindo, ${state.activeUser.name}`);
+    }
+
+    function completeQuickAccess() {
+      const name = document.getElementById('reg-name').value.trim();
+      const age = parseInt(document.getElementById('reg-age').value, 10);
+      const errBox = document.getElementById('onboard-error');
+      const errText = document.getElementById('onboard-error-text');
+
+      if (!name || name.length < 2) {
+        errText.textContent = 'Digite seu nome (pelo menos 2 letras).';
+        errBox.classList.remove('hidden');
+        document.getElementById('reg-name').focus();
+        lucide.createIcons();
+        return;
+      }
+
+      if (!age || isNaN(age) || age < 12 || age > 110) {
+        errText.textContent = 'Digite uma idade válida entre 12 e 110 anos.';
+        errBox.classList.remove('hidden');
+        document.getElementById('reg-age').focus();
+        lucide.createIcons();
+        return;
+      }
+
+      errBox.classList.add('hidden');
+      const profile = { name, age };
+      state.savedUser = profile;
+      state.activeUser = profile;
+      localStorage.setItem('diagcore_quick_user_v1', JSON.stringify(profile));
+
+      document.getElementById('onboarding-screen').classList.add('hidden');
+      syncUserProfileUI();
+      syncSettingsFormUI();
+      initChatWelcome();
+      showNativeToast(`${name} • ${age} anos`);
+    }
+
+    function syncUserProfileUI() {
+      const user = state.activeUser || { name: 'Operador', age: 27 };
+      const parts = user.name.trim().split(/\s+/);
+      const initials = (parts[0][0] + (parts[1]?.[0] || parts[0][1] || '')).toUpperCase();
+
+      document.getElementById('user-avatar-initials').textContent = initials;
+      document.getElementById('user-header-badge').textContent = `${user.name} • ${user.age}a`;
+      document.getElementById('chat-operator-name').textContent = user.name;
+      if (document.getElementById('settings-profile-summary')) {
+        document.getElementById('settings-profile-summary').textContent = `${user.name} • ${user.age} anos`;
+      }
+    }
+
+    function returnToOnboardingScreen() {
+      document.getElementById('reg-name').value = '';
+      document.getElementById('reg-age').value = '';
+      openOnboardingScreen();
+    }
+
+    function showNativeToast(msg) {
+      const el = document.getElementById('native-toast');
+      el.textContent = msg;
+      el.classList.remove('opacity-0', 'translate-y-3');
+      el.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        el.classList.add('opacity-0', 'translate-y-3');
+        el.classList.remove('opacity-100', 'translate-y-0');
+      }, 2100);
+    }
+
+    // =========================================================================
+    // 6. NAVEGAÇÃO ENTRE ABAS
+    // =========================================================================
+    function switchAppTab(tab) {
+      stopSpeech();
+      closeResultOverlay();
+      state.activeTab = tab;
+
+      ['scanner', 'feed', 'chat', 'fixes', 'settings'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
+      });
+
+      document.querySelectorAll('.app-nav-btn').forEach(btn => {
+        const active = btn.dataset.tab === tab;
+        btn.classList.toggle('text-neonCyan', active);
+        btn.classList.toggle('font-extrabold', active);
+        btn.classList.toggle('text-slate-500', !active);
+      });
+
+      if (tab === 'feed') renderFeed();
+      if (tab === 'chat') {
+        if (state.chatHistory.length === 0) initChatWelcome();
+        updateChatChips();
+      }
+      if (tab === 'fixes') renderFixTickets();
+      if (tab === 'settings') {
+        renderLanguageGrid();
+        syncSettingsFormUI();
+      }
+      lucide.createIcons();
+    }
+
+    // =========================================================================
+    // 7. SCANNER MULTI-PROTOCOLO (CATEGORIAS, MONTADORAS, TECLADO & LAUDO)
+    // =========================================================================
+    function renderCategories() {
+      const bar = document.getElementById('category-bar');
+      bar.innerHTML = Object.keys(VEHICLE_CATALOG).map(cat => {
+        const active = state.selectedCategory === cat;
+        const icon = VEHICLE_CATALOG[cat].icon;
+        return `
+          <button onclick="selectCategory('${cat}')" class="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition active:scale-95 ${
+            active
+              ? 'bg-neonCyan text-black shadow-[0_0_15px_rgba(0,240,255,0.3)]'
+              : 'bg-surfaceLight text-slate-300 border border-white/10 hover:border-white/25'
+          }">
+            <span>${icon}</span>
+            <span>${cat}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectCategory(cat) {
+      if (state.selectedCategory === cat) {
+        state.selectedCategory = null;
+        state.selectedBrand = null;
+      } else {
+        state.selectedCategory = cat;
+        state.selectedBrand = null;
+      }
+      renderCategories();
+      renderBrands();
+      updateContextDisplays();
+      if (state.activeTab === 'chat') updateChatChips();
+    }
+
+    function renderBrands() {
+      const bar = document.getElementById('brand-bar');
+      const brands = state.selectedCategory
+        ? VEHICLE_CATALOG[state.selectedCategory].brands
+        : ['Volkswagen', 'Toyota Hilux', 'Chevrolet S10', 'Scania', 'Volvo Trucks', 'John Deere', 'Massey Ferguson', 'Valtra', 'New Holland', 'Caterpillar', 'Fiat', 'Honda'];
+
+      bar.innerHTML = brands.map(brand => {
+        const active = state.selectedBrand === brand;
+        return `
+          <button onclick="selectBrand('${brand.replace(/'/g, "\\'")}')" class="shrink-0 px-3 py-1 rounded-full text-[11px] font-semibold transition active:scale-95 ${
+            active
+              ? 'bg-neonAmber text-black font-extrabold shadow-[0_0_12px_rgba(255,184,0,0.3)]'
+              : 'bg-surface text-slate-300 border border-white/10'
+          }">
+            ${brand}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectBrand(brand) {
+      if (state.selectedBrand === brand) {
+        state.selectedBrand = null;
+      } else {
+        state.selectedBrand = brand;
+        if (!state.selectedCategory) {
+          for (const [catName, catData] of Object.entries(VEHICLE_CATALOG)) {
+            if (catData.brands.includes(brand)) {
+              state.selectedCategory = catName;
+              renderCategories();
+              break;
+            }
+          }
+        }
+      }
+      renderBrands();
+      updateContextDisplays();
+      if (state.activeTab === 'chat') updateChatChips();
+    }
+
+    function updateContextDisplays() {
+      const cat = state.selectedCategory;
+      const brand = state.selectedBrand;
+      const catInfo = cat ? VEHICLE_CATALOG[cat] : null;
+
+      document.getElementById('cat-selected-tag').textContent = cat ? cat.toUpperCase() : 'TODOS OS VEÍCULOS';
+      document.getElementById('hud-voltage').textContent = catInfo ? catInfo.voltage : '12V / 24V';
+      document.getElementById('hud-protocol').textContent = catInfo ? catInfo.protocol : 'OBD-II / SAE J1939';
+
+      if (cat && brand) {
+        document.getElementById('active-context-badge').textContent = `${catInfo.icon} ${cat.toUpperCase()} • ${brand.toUpperCase()}`;
+        document.getElementById('chat-context-label').textContent = `${catInfo.icon} ${cat} • ${brand} (${catInfo.voltage})`;
+      } else if (cat) {
+        document.getElementById('active-context-badge').textContent = `${catInfo.icon} ${cat.toUpperCase()} • SELECIONE A MARCA`;
+        document.getElementById('chat-context-label').textContent = `${catInfo.icon} ${cat} • ${catInfo.voltage}`;
+      } else if (brand) {
+        document.getElementById('active-context-badge').textContent = `MONTADORA: ${brand.toUpperCase()}`;
+        document.getElementById('chat-context-label').textContent = `${brand} • DiagCore AI`;
+      } else {
+        document.getElementById('active-context-badge').textContent = 'MODO UNIVERSAL • ESCOLHA VEÍCULO E MARCA';
+        document.getElementById('chat-context-label').textContent = t('chatAnyTopicSubtitle');
+      }
+
+      const samples = catInfo ? catInfo.samples : ['P0300', 'P0087', 'SPN 3226 FMI 18', 'ECU 000094.18'];
+      document.getElementById('quick-samples-bar').innerHTML = samples.map(code => `
+        <button onclick="quickFillAndSearch('${code}')" class="shrink-0 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/[0.06] hover:bg-white/10 text-neonCyan border border-neonCyan/20 active:scale-95">
+          ${code}
+        </button>
+      `).join('');
+    }
+
+    function getAllUniqueBrands() {
+      const set = new Set();
+      Object.values(VEHICLE_CATALOG).forEach(c => c.brands.forEach(b => set.add(b)));
+      return Array.from(set).sort();
+    }
+
+    function openBrandDrawer() {
+      const modal = document.getElementById('brand-drawer-modal');
+      document.getElementById('drawer-category-label').textContent = state.selectedCategory
+        ? `${VEHICLE_CATALOG[state.selectedCategory].icon} ${state.selectedCategory}`
+        : 'Todas as 8 categorias';
+      document.getElementById('brand-search-input').value = '';
+      renderBrandDrawerGrid(state.selectedCategory ? VEHICLE_CATALOG[state.selectedCategory].brands : getAllUniqueBrands());
+      modal.classList.remove('hidden');
+    }
+
+    function closeBrandDrawer() {
+      document.getElementById('brand-drawer-modal').classList.add('hidden');
+    }
+
+    function filterBrandDrawerList() {
+      const q = document.getElementById('brand-search-input').value.toLowerCase().trim();
+      const baseList = state.selectedCategory ? VEHICLE_CATALOG[state.selectedCategory].brands : getAllUniqueBrands();
+      renderBrandDrawerGrid(baseList.filter(b => b.toLowerCase().includes(q)));
+    }
+
+    function renderBrandDrawerGrid(brands) {
+      const grid = document.getElementById('brand-drawer-grid');
+      grid.innerHTML = brands.map(brand => {
+        const active = state.selectedBrand === brand;
+        return `
+          <button onclick="selectBrandFromDrawer('${brand.replace(/'/g, "\\'")}')" class="p-3 rounded-2xl text-left text-xs font-bold transition active:scale-95 ${
+            active
+              ? 'bg-neonAmber text-black shadow-[0_0_15px_rgba(255,184,0,0.25)]'
+              : 'bg-surfaceLight text-slate-200 border border-white/10'
+          }">
+            ${brand}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectBrandFromDrawer(brand) {
+      selectBrand(brand);
+      closeBrandDrawer();
+      showNativeToast(brand);
+    }
+
+    function appendKey(char) {
+      const input = document.getElementById('code-display-input');
+      input.value = (input.value + char).toUpperCase();
+    }
+
+    function backspaceKey() {
+      const input = document.getElementById('code-display-input');
+      input.value = input.value.slice(0, -1);
+    }
+
+    function clearDisplayKey() {
+      document.getElementById('code-display-input').value = '';
+    }
+
+    function quickFillAndSearch(code) {
+      document.getElementById('code-display-input').value = code;
+      executeDiagnosticSearch();
+    }
+
+    function formatPressure(raw) {
+      if (state.settings.pressureUnit !== 'psi') return raw;
+      return raw.replace(/(\d+(?:\.\d+)?)\s*bar/gi, (_, num) => `${(parseFloat(num) * 14.5038).toFixed(1)} PSI`);
+    }
+
+    function buildDiagnosticReport(rawCode) {
+      const clean = rawCode.trim().toUpperCase();
+      const chosenCategory = state.selectedCategory || 'Trator Agrícola';
+      const chosenBrand = state.selectedBrand || VEHICLE_CATALOG[chosenCategory].brands[0];
+      const voltage = VEHICLE_CATALOG[chosenCategory]?.voltage || '12V / 24V';
+
+      const exact = FAULT_DATABASE.find(item => item.code.toUpperCase() === clean);
+      if (exact) {
+        return {
+          ...exact,
+          category: state.selectedCategory || exact.category,
+          brand: state.selectedBrand || exact.brand,
+          voltage: VEHICLE_CATALOG[state.selectedCategory || exact.category]?.voltage || exact.voltage
+        };
+      }
+
+      const isHeavyOrAgri = ['Caminhão', 'Trator Agrícola', 'Colheitadeira', 'Linha Amarela'].includes(chosenCategory);
+      const isFuelOrBoost = /0087|0299|0234|0094|157|179|RAIL|TURBO|PRESS|FUEL|COMBUST/.test(clean);
+      const isElectricalOrNet = /^U|^B|0100|0121|0562|0247|FMI\s*0?[345]|CAN|ECU|VOLT/.test(clean);
+
+      if (isElectricalOrNet) {
+        return {
+          code: clean,
+          category: chosenCategory,
+          brand: chosenBrand,
+          system: isHeavyOrAgri ? 'Rede SAE J1939 & Alimentação' : 'Rede CAN & Alimentação',
+          severity: 'ALTA',
+          voltage,
+          title: `Anomalia de sinal, alimentação ou comunicação (${clean})`,
+          meaning: `Módulo de controle em ${chosenBrand} (${chosenCategory}) registrou variação de tensão, resistência ou perda de quadro no código ${clean}.`,
+          causes: [
+            { label: `Queda de tensão, mau contato em conector ou oxidação em chicote (${voltage})`, prob: 45 },
+            { label: 'Curto-circuito para massa ou +B em sensor/atuador associado', prob: 35 },
+            { label: 'Interferência em barramento CAN ou falha interna de módulo', prob: 20 }
+          ],
+          readings: {
+            volts: isHeavyOrAgri ? '24.0V linha • 5.0V ref sensor' : '12.6V linha • 5.0V ref sensor',
+            ohms: '< 1.0 Ω continuidade / ~60 Ω barramento CAN',
+            pressure: 'N/A (Sinal / Rede)'
+          },
+          checklist: [
+            `Medir tensão de alimentação (${voltage}) sob carga e verificar queda de massa.`,
+            'Inspecionar pinos e travas do conector mais próximo ao circuito afetado.',
+            'Testar continuidade e isolamento contra massa/positivo com multímetro.'
+          ]
+        };
+      }
+
+      return {
+        code: clean,
+        category: chosenCategory,
+        brand: chosenBrand,
+        system: isHeavyOrAgri ? 'Trem de Força & Sensores' : 'Motor & Gerenciamento',
+        severity: isFuelOrBoost ? 'CRÍTICA' : 'ALTA',
+        voltage,
+        title: `Falha registrada no código ${clean} (${chosenBrand})`,
+        meaning: `Diagnóstico direcionado para ${chosenBrand} na categoria ${chosenCategory} (${voltage}) referente ao código ${clean}.`,
+        causes: [
+          { label: 'Sensor de monitoramento com leitura fora da faixa ou contaminação', prob: 45 },
+          { label: isFuelOrBoost ? 'Restrição de fluxo, pressão ou vazamento no circuito' : 'Falha de atuador, ignição/injeção ou perda de sincronismo', prob: 35 },
+          { label: 'Fiação/conector com resistência anômala ou falha intermitente', prob: 20 }
+        ],
+        readings: {
+          volts: isHeavyOrAgri ? '24.0V sist • 0.5–4.5V sinal' : '12.6V sist • 0.5–4.5V sinal',
+          ohms: '1.0–15.0 Ω atuador / < 1.5 Ω chicote',
+          pressure: isFuelOrBoost ? '3.5–12.0 bar (conforme linha)' : '1.0–2.2 bar admissão'
+        },
+        checklist: [
+          'Registrar dados ao vivo (RPM, pressão, temperatura e tensão) no momento da falha.',
+          'Conferir alimentação, massa e sinal do sensor/atuador vinculado ao código.',
+          'Executar teste de bancada ou atuação forçada para validar o reparo.'
+        ]
+      };
+    }
+
+    function executeDiagnosticSearch() {
+      const input = document.getElementById('code-display-input');
+      const code = input.value.trim().toUpperCase();
+      if (!code) {
+        showNativeToast('Digite ou selecione um código');
+        return;
+      }
+      const report = buildDiagnosticReport(code);
+      openResultOverlay(report);
+    }
+
+    function openResultOverlay(dtc) {
+      const overlay = document.getElementById('view-result-overlay');
+      const container = document.getElementById('result-card-container');
+      container.innerHTML = buildDiagnosticCardHTML(dtc, true);
+      overlay.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeResultOverlay() {
+      stopSpeech();
+      document.getElementById('view-result-overlay').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // 8. CARTÃO DIAGNÓSTICO INTERATIVO & FEED ESTILO TIKTOK
+    // =========================================================================
+    function isCodeSaved(code, brand) {
+      return state.savedCodes.some(item => item.code === code && item.brand === brand);
+    }
+
+    function toggleChecklistItem(cardKey, stepIndex) {
+      const key = `${cardKey}::${stepIndex}`;
+      state.checkedTests[key] = !state.checkedTests[key];
+      localStorage.setItem('diagcore_checked_v6', JSON.stringify(state.checkedTests));
+      if (state.activeTab === 'feed') renderFeed();
+      if (!document.getElementById('view-result-overlay').classList.contains('hidden')) {
+        const currentCode = document.getElementById('code-display-input').value.trim().toUpperCase();
+        if (currentCode) openResultOverlay(buildDiagnosticReport(currentCode));
+      }
+    }
+
+    function buildDiagnosticCardHTML(dtc, isOverlay = false) {
+      const saved = isCodeSaved(dtc.code, dtc.brand);
+      const safeJson = JSON.stringify(dtc).replace(/'/g, "&#39;");
+      const cardKey = `${dtc.category}::${dtc.brand}::${dtc.code}`;
+      const catIcon = VEHICLE_CATALOG[dtc.category]?.icon || '⚙️';
+      const doneCount = dtc.checklist.filter((_, idx) => !!state.checkedTests[`${cardKey}::${idx}`]).length;
+      const severityClass = dtc.severity === 'CRÍTICA'
+        ? 'bg-neonRed/20 text-neonRed border-neonRed/40'
+        : dtc.severity === 'ALTA'
+          ? 'bg-neonAmber/20 text-neonAmber border-neonAmber/40'
+          : 'bg-neonCyan/20 text-neonCyan border-neonCyan/40';
+
+      const causesHTML = dtc.causes.map(c => `
+        <div class="space-y-1">
+          <div class="flex items-center justify-between text-[11px] gap-2">
+            <span class="text-slate-200 font-medium">${c.label}</span>
+            <span class="font-mono font-extrabold text-neonCyan shrink-0">${c.prob}%</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div class="h-full rounded-full bg-gradient-to-r from-neonCyan to-neonAmber" style="width:${c.prob}%"></div>
+          </div>
+        </div>
+      `).join('');
+
+      const checklistHTML = dtc.checklist.map((step, idx) => {
+        const checked = !!state.checkedTests[`${cardKey}::${idx}`];
+        return `
+          <button type="button" onclick='toggleChecklistItem("${cardKey.replace(/"/g, '&quot;')}", ${idx})' class="w-full text-left flex items-start gap-2.5 p-2 rounded-2xl transition active:scale-[0.99] ${
+            checked ? 'bg-neonGreen/10 border border-neonGreen/30' : 'bg-white/[0.03] border border-white/[0.06]'
+          }">
+            <span class="mt-0.5 w-4 h-4 rounded-md flex items-center justify-center shrink-0 text-[10px] font-black ${
+              checked ? 'bg-neonGreen text-black' : 'border border-slate-500 text-transparent'
+            }">✓</span>
+            <span class="text-[11px] leading-snug ${checked ? 'line-through text-slate-400' : 'text-slate-200'}">${step}</span>
+          </button>
+        `;
+      }).join('');
+
+      return `
+        <div class="${isOverlay ? '' : 'snap-card flex flex-col justify-center px-4 pt-14 pb-20'}">
+          <div class="w-full rounded-[32px] bg-surface border border-white/10 p-4 space-y-3 shadow-2xl">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-mono font-black text-base px-2.5 py-0.5 rounded-xl bg-neonCyan/15 text-neonCyan border border-neonCyan/30">${dtc.code}</span>
+                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-neonAmber/15 text-neonAmber border border-neonAmber/30">${catIcon} ${dtc.category}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white">${dtc.brand}</span>
+              </div>
+              <span class="text-[9px] font-mono font-black px-2 py-0.5 rounded-full border ${severityClass}">${dtc.severity}</span>
+            </div>
+
+            <div>
+              <span class="text-[10px] font-mono text-slate-400 block">${dtc.system} • ${dtc.voltage}</span>
+              <h3 class="text-sm font-black text-white leading-snug mt-0.5">${dtc.title}</h3>
+              <p class="text-[11px] text-slate-300 leading-relaxed mt-1">${dtc.meaning}</p>
+            </div>
+
+            <!-- Medições de Referência (Volts / Ohms / Bar-PSI) -->
+            <div class="grid grid-cols-3 gap-1.5 pt-0.5">
+              <div class="p-2 rounded-2xl bg-surfaceLight border border-white/[0.07]">
+                <span class="text-[9px] font-mono font-bold text-neonCyan block">VOLTS</span>
+                <span class="text-[10px] font-mono text-white font-semibold leading-tight block mt-0.5">${dtc.readings.volts}</span>
+              </div>
+              <div class="p-2 rounded-2xl bg-surfaceLight border border-white/[0.07]">
+                <span class="text-[9px] font-mono font-bold text-neonAmber block">OHMS (Ω)</span>
+                <span class="text-[10px] font-mono text-white font-semibold leading-tight block mt-0.5">${dtc.readings.ohms}</span>
+              </div>
+              <div class="p-2 rounded-2xl bg-surfaceLight border border-white/[0.07]">
+                <span class="text-[9px] font-mono font-bold text-neonGreen block">PRESSÃO</span>
+                <span class="text-[10px] font-mono text-white font-semibold leading-tight block mt-0.5">${formatPressure(dtc.readings.pressure)}</span>
+              </div>
+            </div>
+
+            <!-- Causas Prováveis -->
+            <div class="p-3 rounded-2xl bg-surfaceLight/80 border border-white/[0.07] space-y-2">
+              <span class="text-[10px] font-mono font-bold uppercase text-slate-400 block">Causas Prováveis</span>
+              ${causesHTML}
+            </div>
+
+            <!-- Checklist Interativo de Bancada -->
+            <div class="p-3 rounded-2xl bg-surfaceLight/80 border border-white/[0.07] space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-mono font-bold uppercase text-neonGreen">Checklist de Bancada</span>
+                <span class="text-[10px] font-mono font-extrabold text-white">${doneCount}/${dtc.checklist.length}</span>
+              </div>
+              <div class="space-y-1.5">${checklistHTML}</div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="grid grid-cols-3 gap-2 pt-1">
+              <button onclick='speakDiagnostic(${safeJson})' class="h-10 rounded-2xl bg-surfaceLight border border-white/10 text-[11px] font-bold text-neonCyan flex items-center justify-center gap-1 active:scale-95">
+                <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                <span>Ouvir</span>
+              </button>
+
+              <button onclick='askChatAboutCode(${safeJson})' class="h-10 rounded-2xl bg-surfaceLight border border-white/10 text-[11px] font-bold text-neonPurple flex items-center justify-center gap-1 active:scale-95">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span>Chat IA</span>
+              </button>
+
+              <button onclick='toggleSaveCode(${safeJson})' class="h-10 rounded-2xl border text-[11px] font-extrabold flex items-center justify-center gap-1 active:scale-95 ${
+                saved
+                  ? 'bg-neonAmber text-black border-neonAmber'
+                  : 'bg-surfaceLight text-slate-200 border-white/10'
+              }">
+                <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
+                <span>${saved ? 'Salvo' : 'Salvar'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function cycleFeedCategoryFilter() {
+      const options = ['ALL', 'Carro', 'Picape / 4x4', 'Caminhão', 'Trator Agrícola', 'Linha Amarela'];
+      const idx = options.indexOf(state.feedFilterCategory);
+      state.feedFilterCategory = options[(idx + 1) % options.length];
+      renderFeed();
+    }
+
+    function scrollFeedBy(dir) {
+      const list = document.getElementById('feed-snap-list');
+      list.scrollBy({ top: dir * list.clientHeight, behavior: 'smooth' });
+    }
+
+    function renderFeed() {
+      const list = document.getElementById('feed-snap-list');
+      const filterBtn = document.getElementById('feed-filter-btn');
+      filterBtn.textContent = state.feedFilterCategory === 'ALL' ? 'Todas' : state.feedFilterCategory;
+
+      const items = state.feedFilterCategory === 'ALL'
+        ? FAULT_DATABASE
+        : FAULT_DATABASE.filter(d => d.category === state.feedFilterCategory);
+
+      list.innerHTML = items.map(dtc => buildDiagnosticCardHTML(dtc, false)).join('');
+      lucide.createIcons();
+    }
+
+    // =========================================================================
+    // 9. CHAT IA COPILOTO (MEMÓRIA DE NOME/IDADE + RESPOSTA PARA QUALQUER TEMA)
+    // =========================================================================
+    function setChatMode(mode) {
+      state.chatMode = mode;
+      document.querySelectorAll('.chat-mode-btn').forEach(btn => {
+        const active = btn.dataset.cmode === mode;
+        btn.classList.toggle('bg-neonCyan', active);
+        btn.classList.toggle('text-black', active);
+        btn.classList.toggle('font-extrabold', active);
+        btn.classList.toggle('bg-surfaceLight', !active);
+        btn.classList.toggle('text-slate-300', !active);
+        btn.classList.toggle('font-bold', !active);
+      });
+      updateChatChips();
+    }
+
+    function buildAssistantSystemPrompt() {
+      const user = state.activeUser || { name: 'Operador', age: 27 };
+      const lang = state.settings.language || 'pt';
+      const style = state.settings.aiStyle || 'concise';
+      const ctxVehicle = state.selectedCategory
+        ? `${state.selectedCategory}${state.selectedBrand ? ' / ' + state.selectedBrand : ''}`
+        : 'modo universal';
+
+      return `Você é o DiagCore AI, assistente inteligente versátil no estilo do Gemini.
+Responda SEMPRE no idioma de código "${lang}".
+Dados do usuário: Nome = "${user.name}", Idade = "${user.age} anos".
+Quando perguntarem o nome, idade ou dados do usuário, responda com exatidão ("${user.name}" e "${user.age} anos").
+Responda qualquer assunto (ciência, código, estudos, cotidiano, ideias, além de veículos, tratores, caminhões, elétrica e bancada).
+Modo ativo: ${state.chatMode}. Estilo: ${style === 'detailed' ? 'detalhado e didático' : 'direto, claro e técnico'}.
+Contexto atual: ${ctxVehicle}.`;
+    }
+
+    function initChatWelcome() {
+      const user = state.activeUser || { name: 'Operador', age: 27 };
+      const lang = state.settings.language || 'pt';
+
+      const greetings = {
+        pt: `Olá, **${user.name}**! Sei que você se chama **${user.name}** e tem **${user.age} anos**. Pergunte qualquer coisa — códigos de falha, tratores, elétrica, bancada ou qualquer assunto do dia a dia.`,
+        en: `Hi, **${user.name}**! I know your name is **${user.name}** and you are **${user.age} years old**. Ask anything — fault codes, tractors, electrical, bench tests, or any general topic.`,
+        es: `¡Hola, **${user.name}**! Sé que te llamas **${user.name}** y tienes **${user.age} años**. Pregunta lo que quieras: códigos de falla, tractores, eléctrica, banco o cualquier tema.`,
+        fr: `Bonjour **${user.name}** ! Je sais que vous vous appelez **${user.name}** et avez **${user.age} ans**. Posez toutes vos questions !`,
+        de: `Hallo **${user.name}**! Ich weiß, dass du **${user.name}** heißt und **${user.age} Jahre** alt bist. Frag mich alles!`,
+        it: `Ciao **${user.name}**! So che ti chiami **${user.name}** e hai **${user.age} anni**. Chiedimi qualsiasi cosa!`,
+        ja: `こんにちは、**${user.name}**さん！お名前は**${user.name}**さん、年齢は**${user.age}歳**ですね。どんな質問でもどうぞ！`,
+        ko: `안녕하세요, **${user.name}**님! 이름은 **${user.name}**, 나이는 **${user.age}세**이시군요. 무엇이든 물어보세요!`,
+        ru: `Привет, **${user.name}**! Я знаю, что тебя зовут **${user.name}** и тебе **${user.age} лет**. Спрашивай о чём угодно!`,
+        ar: `مرحبًا **${user.name}**! أعلم أن اسمك **${user.name}** وعمرك **${user.age} سنة**. اسألني عن أي شيء!`
+      };
+
+      state.chatHistory = [
+        {
+          role: 'ai',
+          text: greetings[lang] || greetings.pt,
+          relatedCodes: ['P0300', 'ECU 000094.18']
+        }
+      ];
+      renderChatMessages();
+      updateChatChips();
+    }
+
+    function resetChatConversation() {
+      initChatWelcome();
+    }
+
+    function updateChatChips() {
+      const chipsContainer = document.getElementById('chat-quick-chips');
+      const lang = state.settings.language || 'pt';
+
+      const chipsByMode = {
+        pt: {
+          general: ['Qual é o meu nome e idade?', 'Explique como funciona um motor turbo', 'Me dê ideias de rotina produtiva'],
+          electrical: ['Como medir continuidade e queda de tensão?', 'O que significa 5V de referência em sensor?', 'Como testar barramento CAN com multímetro?'],
+          bench: ['Como testar sensor de rotação indutivo/Hall?', 'Pressão no rail baixa: o que medir na bancada?', 'Como conferir resistência de bobina de ignição?']
+        },
+        en: {
+          general: ['What is my name and age?', 'Explain turbochargers simply', 'Give me 3 productivity tips'],
+          electrical: ['How to test voltage drop on a circuit?', 'What is a 5V sensor reference wire?', 'How to check CAN bus resistance?'],
+          bench: ['How to bench-test a crank sensor?', 'Low rail pressure: bench checks?', 'How to test ignition coil resistance?']
+        },
+        es: {
+          general: ['¿Cuál es mi nombre y edad?', 'Explica cómo funciona un turbo', 'Dame ideas para organizar el día'],
+          electrical: ['¿Cómo medir caída de tensión?', '¿Qué es la referencia de 5V en un sensor?', '¿Cómo revisar la red CAN?'],
+          bench: ['¿Cómo probar un sensor de giro en banco?', 'Baja presión en riel: ¿qué medir?', '¿Cómo medir resistencia de bobina?']
+        }
+      };
+
+      const pack = chipsByMode[lang] || chipsByMode.pt;
+      const chips = pack[state.chatMode] || pack.general;
+
+      chipsContainer.innerHTML = chips.map(q => `
+        <button onclick="sendQuickChip('${q.replace(/'/g, "\\'")}')" class="shrink-0 px-3 py-1.5 rounded-full bg-surfaceLight border border-white/10 text-[10px] font-semibold text-slate-200 hover:border-neonCyan/50 active:scale-95 transition">
+          ${q}
+        </button>
+      `).join('');
+    }
+
+    function sendQuickChip(text) {
+      document.getElementById('chat-text-input').value = text;
+      sendChatMessage();
+    }
+
+    function askChatAboutCode(dtc) {
+      closeResultOverlay();
+      switchAppTab('chat');
+      document.getElementById('chat-text-input').value = `${dtc.code} (${dtc.brand}) - ${dtc.title}`;
+      sendChatMessage();
+    }
+
+    function jumpFromChatToScanner(code) {
+      switchAppTab('scanner');
+      document.getElementById('code-display-input').value = code.toUpperCase();
+      executeDiagnosticSearch();
+    }
+
+    function formatSimpleMarkdown(raw) {
+      return raw
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-extrabold">$1</strong>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function renderChatMessages() {
+      const stream = document.getElementById('chat-messages-stream');
+      stream.innerHTML = state.chatHistory.map(msg => {
+        if (msg.role === 'user') {
+          return `
+            <div class="flex justify-end">
+              <div class="max-w-[84%] px-3.5 py-2.5 rounded-3xl rounded-br-md bg-gradient-to-r from-neonCyan to-[#00B8D4] text-black text-xs font-extrabold leading-relaxed shadow-md">
+                ${formatSimpleMarkdown(msg.text)}
+              </div>
+            </div>
+          `;
+        }
+
+        const codesPills = (msg.relatedCodes || []).map(c => `
+          <button onclick="jumpFromChatToScanner('${c}')" class="px-2 py-0.5 rounded-lg bg-neonCyan/15 text-neonCyan font-mono font-bold text-[10px] border border-neonCyan/30 active:scale-95">
+            ${c} ↗
+          </button>
+        `).join('');
+
+        const plainForSpeech = msg.text.replace(/\*\*/g, '').replace(/'/g, ' ');
+
+        return `
+          <div class="flex flex-col items-start">
+            <div class="w-full p-3.5 rounded-3xl rounded-bl-md bg-surfaceLight border border-white/10 space-y-2">
+              <div class="text-xs text-slate-200 leading-relaxed">
+                ${formatSimpleMarkdown(msg.text)}
+              </div>
+
+              <div class="pt-1.5 border-t border-white/[0.06] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1 flex-wrap">${codesPills}</div>
+                <button onclick="speakPlainText('${plainForSpeech.replace(/"/g, '&quot;')}')" class="text-[10px] font-bold text-neonCyan shrink-0 active:scale-95">
+                  🔊
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    async function fetchGeminiWithBackoff(userText, historySnapshot) {
+      const apiKey = "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      const contents = historySnapshot.slice(-8).map(item => ({
+        role: item.role === 'user' ? 'user' : 'model',
+        parts: [{ text: item.text }]
+      }));
+      contents.push({ role: 'user', parts: [{ text: userText }] });
+
+      const payload = {
+        contents,
+        systemInstruction: {
+          parts: [{ text: buildAssistantSystemPrompt() }]
+        }
+      };
+
+      const delays = [1000, 2000];
+      for (let attempt = 0; attempt <= delays.length; attempt++) {
+        try {
+          const resp = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const data = await resp.json();
+          const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (replyText) return replyText.trim();
+        } catch (_) {
+          if (attempt < delays.length) {
+            await new Promise(r => setTimeout(r, delays[attempt]));
+          }
+        }
+      }
+      return null;
+    }
+
+    function buildLocalVersatileReply(query) {
+      const user = state.activeUser || { name: 'Operador', age: 27 };
+      const q = query.toLowerCase();
+      const lang = state.settings.language || 'pt';
+
+      const asksName = /nome|name|nombre|prénom|nom|名前|이름|имя|اسم/.test(q);
+      const asksAge = /idade|anos|age|edad|âge|ans|alter|età|年齢|나이|возраст|عمر/.test(q);
+
+      if (asksName && asksAge) {
+        if (lang === 'en') return `Your name is **${user.name}** and you are **${user.age} years old**.`;
+        if (lang === 'es') return `Tu nombre es **${user.name}** y tienes **${user.age} años**.`;
+        return `Seu nome é **${user.name}** e você tem **${user.age} anos**.`;
+      }
+      if (asksName) {
+        if (lang === 'en') return `Your name is **${user.name}**.`;
+        if (lang === 'es') return `Tu nombre es **${user.name}**.`;
+        return `Seu nome é **${user.name}**.`;
+      }
+      if (asksAge) {
+        if (lang === 'en') return `You are **${user.age} years old**, ${user.name}.`;
+        if (lang === 'es') return `Tienes **${user.age} años**, ${user.name}.`;
+        return `Você tem **${user.age} anos**, ${user.name}.`;
+      }
+
+      if (state.chatMode === 'electrical') {
+        return `Entendido, **${user.name}** (modo **Elétrica & Pinagem**): para **"${query}"**, verifique primeiro alimentação nominal (12V/24V), referência de **5.0V**, aterramento (< 0.1V de queda) e resistência/sinal do circuito com multímetro ou osciloscópio.`;
+      }
+      if (state.chatMode === 'bench') {
+        return `Certo, **${user.name}** (modo **Bancada & Medições**): sobre **"${query}"**, isole o componente da máquina, confira resistência em **Ohms (Ω)**, tensão em **Volts (V)** e pressão em **${state.settings.pressureUnit.toUpperCase()}** sob simulação controlada.`;
+      }
+      return `Entendido, **${user.name}**! Sobre **"${query}"**: vamos direto ao ponto — comece pelos fundamentos principais, valide os dados ou condições reais e siga por etapas. Quer que eu detalhe algum ponto específico?`;
+    }
+
+    async function sendChatMessage() {
+      const input = document.getElementById('chat-text-input');
+      const userText = input.value.trim();
+      if (!userText) return;
+
+      input.value = '';
+      const historySnapshot = [...state.chatHistory];
+      state.chatHistory.push({ role: 'user', text: userText });
+
+      const pendingIdx = state.chatHistory.push({
+        role: 'ai',
+        text: '...',
+        relatedCodes: []
+      }) - 1;
+      renderChatMessages();
+
+      const aiText = (await fetchGeminiWithBackoff(userText, historySnapshot)) || buildLocalVersatileReply(userText);
+      const codeMatch = userText.toUpperCase().match(/\b([PUBC][0-9]{4}|SPN\s?[0-9]+|ECU\s?[0-9.]+|CID\s?[0-9]+|[0-9]{5})\b/);
+
+      state.chatHistory[pendingIdx] = {
+        role: 'ai',
+        text: aiText,
+        relatedCodes: codeMatch ? [codeMatch[0]] : []
+      };
+      renderChatMessages();
+
+      if (state.settings.autoSpeak) {
+        speakPlainText(aiText.replace(/\*\*/g, ''));
+      }
+    }
+
+    // =========================================================================
+    // 10. CORREÇÕES TÉCNICAS & BUGS
+    // =========================================================================
+    function setFixPriority(prio) {
+      state.selectedFixPriority = prio;
+      document.querySelectorAll('.fix-prio-btn').forEach(btn => {
+        const active = btn.dataset.prio === prio;
+        btn.classList.remove('bg-neonCyan', 'bg-neonAmber', 'bg-neonRed', 'text-black', 'font-extrabold', 'text-slate-400', 'font-bold');
+        if (active) {
+          const bg = prio === 'Crítica' ? 'bg-neonRed' : prio === 'Alta' ? 'bg-neonAmber' : 'bg-neonCyan';
+          btn.classList.add(bg, 'text-black', 'font-extrabold');
+        } else {
+          btn.classList.add('text-slate-400', 'font-bold');
+        }
+      });
+    }
+
+    function setFixFilter(filter) {
+      state.fixStatusFilter = filter;
+      document.querySelectorAll('.fix-filter-pill').forEach(pill => {
+        const active = pill.dataset.ffilter === filter;
+        pill.classList.toggle('bg-neonCyan', active);
+        pill.classList.toggle('text-black', active);
+        pill.classList.toggle('font-extrabold', active);
+        pill.classList.toggle('bg-surfaceLight', !active);
+        pill.classList.toggle('text-slate-300', !active);
+        pill.classList.toggle('font-bold', !active);
+      });
+      renderFixTickets();
+    }
+
+    function submitTechnicalFix() {
+      const module = document.getElementById('fix-module').value;
+      const title = document.getElementById('fix-title').value.trim();
+      const desc = document.getElementById('fix-desc').value.trim();
+
+      if (!title || title.length < 4) {
+        showNativeToast('Escreva o título do bug ou correção');
+        document.getElementById('fix-title').focus();
+        return;
+      }
+
+      const nextNum = 101 + state.fixTickets.length;
+      const newTicket = {
+        id: `TCK-${nextNum}`,
+        module,
+        priority: state.selectedFixPriority,
+        status: 'Aberto',
+        title,
+        desc: desc || 'Correção técnica registrada pelo operador no terminal.',
+        author: state.activeUser?.name || 'Operador',
+        date: 'Agora'
+      };
+
+      state.fixTickets = [newTicket, ...state.fixTickets];
+      localStorage.setItem('diagcore_fixes_v1', JSON.stringify(state.fixTickets));
+
+      document.getElementById('fix-title').value = '';
+      document.getElementById('fix-desc').value = '';
+      renderFixTickets();
+      showNativeToast(`${newTicket.id} registrado!`);
+    }
+
+    function cycleTicketStatus(id) {
+      const order = ['Aberto', 'Em Análise', 'Corrigido'];
+      state.fixTickets = state.fixTickets.map(t => {
+        if (t.id !== id) return t;
+        const nextStatus = order[(order.indexOf(t.status) + 1) % order.length];
+        showNativeToast(`${t.id}: ${nextStatus}`);
+        return { ...t, status: nextStatus };
+      });
+      localStorage.setItem('diagcore_fixes_v1', JSON.stringify(state.fixTickets));
+      renderFixTickets();
+    }
+
+    function deleteTicket(id) {
+      state.fixTickets = state.fixTickets.filter(t => t.id !== id);
+      localStorage.setItem('diagcore_fixes_v1', JSON.stringify(state.fixTickets));
+      renderFixTickets();
+      showNativeToast('Registro removido');
+    }
+
+    function renderFixTickets() {
+      const container = document.getElementById('fixes-tickets-list');
+      const openCount = state.fixTickets.filter(t => t.status !== 'Corrigido').length;
+      document.getElementById('fixes-open-badge').textContent = `${openCount} ${openCount === 1 ? 'aberto' : 'abertos'}`;
+
+      const filtered = state.fixStatusFilter === 'ALL'
+        ? state.fixTickets
+        : state.fixTickets.filter(t => t.status === state.fixStatusFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 rounded-3xl bg-surface border border-white/10 text-center">
+            <p class="text-xs font-bold text-slate-300">Nenhum registro neste filtro</p>
+            <p class="text-[11px] text-slate-500 mt-1">Use o formulário acima para registrar um bug ou correção.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(t => {
+        const statusColors = {
+          'Aberto': 'bg-neonRed/15 text-neonRed border-neonRed/40',
+          'Em Análise': 'bg-neonAmber/15 text-neonAmber border-neonAmber/40',
+          'Corrigido': 'bg-neonGreen/15 text-neonGreen border-neonGreen/40'
+        };
+        const prioColors = {
+          'Crítica': 'text-neonRed',
+          'Alta': 'text-neonAmber',
+          'Normal': 'text-neonCyan'
+        };
+
+        return `
+          <div class="p-3.5 rounded-3xl bg-surface border border-white/10 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded bg-white/10 text-white">${t.id}</span>
+                <span class="text-[10px] font-bold ${prioColors[t.priority] || 'text-neonCyan'}">● ${t.priority}</span>
+                <span class="text-[10px] text-slate-400">• ${t.module}</span>
+              </div>
+              <button onclick="deleteTicket('${t.id}')" class="text-slate-500 hover:text-neonRed text-xs px-1" title="Excluir">✕</button>
+            </div>
+
+            <h4 class="text-xs font-black text-white leading-snug">${t.title}</h4>
+            <p class="text-[11px] text-slate-300 leading-relaxed">${t.desc}</p>
+
+            <div class="pt-1.5 border-t border-white/[0.06] flex items-center justify-between">
+              <span class="text-[10px] font-mono text-slate-500">Por: ${t.author}</span>
+              <button onclick="cycleTicketStatus('${t.id}')" class="px-2.5 py-1 rounded-full border text-[10px] font-extrabold active:scale-95 transition ${statusColors[t.status] || statusColors['Aberto']}">
+                Status: ${t.status} ↻
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 11. CÓDIGOS SALVOS E LEITURA POR VOZ
+    // =========================================================================
+    function toggleSaveCode(dtc) {
+      const exists = isCodeSaved(dtc.code, dtc.brand);
+      if (exists) {
+        state.savedCodes = state.savedCodes.filter(item => !(item.code === dtc.code && item.brand === dtc.brand));
+        showNativeToast(`${dtc.code} removido`);
+      } else {
+        state.savedCodes = [dtc, ...state.savedCodes];
+        showNativeToast(`${dtc.code} salvo!`);
+      }
+
+      localStorage.setItem('diagcore_saved_v6', JSON.stringify(state.savedCodes));
+      updateSavedBadge();
+      renderFeed();
+      if (!document.getElementById('view-result-overlay').classList.contains('hidden')) {
+        openResultOverlay(dtc);
+      }
+    }
+
+    function updateSavedBadge() {
+      const dot = document.getElementById('saved-count-dot');
+      if (state.savedCodes.length > 0) {
+        dot.textContent = state.savedCodes.length;
+        dot.classList.remove('hidden');
+      } else {
+        dot.classList.add('hidden');
+      }
+    }
+
+    function openSavedDrawer() {
+      renderSavedList();
+      document.getElementById('saved-drawer-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeSavedDrawer() {
+      document.getElementById('saved-drawer-modal').classList.add('hidden');
+    }
+
+    function renderSavedList() {
+      const container = document.getElementById('saved-list-container');
+      if (state.savedCodes.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 text-center">
+            <p class="text-sm font-bold text-slate-300">Nenhum código salvo ainda</p>
+            <p class="text-xs text-slate-500 mt-1">Toque em Salvar em qualquer laudo para guardar aqui.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = state.savedCodes.map(dtc => {
+        const safeJson = JSON.stringify(dtc).replace(/'/g, "&#39;");
+        const catIcon = VEHICLE_CATALOG[dtc.category]?.icon || '⚙️';
+        return `
+          <button onclick='closeSavedDrawer(); openResultOverlay(${safeJson})' class="w-full text-left p-3.5 rounded-3xl bg-surfaceLight border border-white/10 transition flex items-center justify-between gap-3 active:scale-[0.98]">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-mono font-black text-sm text-neonCyan">${dtc.code}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-neonAmber/20 text-neonAmber">${dtc.brand}</span>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-slate-300">${catIcon} ${dtc.category}</span>
+              </div>
+              <div class="text-xs font-bold text-white truncate mt-1">${dtc.title}</div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 shrink-0"></i>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function clearSavedCodes() {
+      state.savedCodes = [];
+      localStorage.removeItem('diagcore_saved_v6');
+      updateSavedBadge();
+      renderSavedList();
+      renderFeed();
+      showNativeToast('Salvos limpos');
+    }
+
+    function speakDiagnostic(dtc) {
+      const text = `Código ${dtc.code}, ${dtc.brand}. ${dtc.title}. ${dtc.meaning}. Teste: ${dtc.checklist?.[0] || ''}`;
+      speakPlainText(text);
+    }
+
+    function speakPlainText(text) {
+      if (!('speechSynthesis' in window)) {
+        showNativeToast('Voz indisponível neste navegador');
+        return;
+      }
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        return;
+      }
+      const langMeta = SUPPORTED_LANGUAGES.find(l => l.code === state.settings.language) || SUPPORTED_LANGUAGES[0];
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = langMeta.tts;
+      utterance.rate = 1.05;
+      window.speechSynthesis.speak(utterance);
+      showNativeToast(`🔊 ${langMeta.badge}`);
+    }
+
+    function stopSpeech() {
+      if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+    }
+  </script>
+</body>
+</html>
